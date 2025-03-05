@@ -18,7 +18,7 @@ SRC = $(LUFA_SRC_USB_CLASS) $(LUFA_SRC_USB)
 SRC += $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
 
-CFLAGS = -std=c99 -Wall -Os 
+CFLAGS = -std=c99 -Wall -Os -flto -ffunction-sections -fdata-sections
 CFLAGS += -I. -I$(LUFA_PATH_PARENT)
 CFLAGS += -D F_CPU=$(F_CPU) -mmcu=$(MCU) -D F_USB=$(F_USB) -D ARCH=ARCH_$(ARCH)
 
