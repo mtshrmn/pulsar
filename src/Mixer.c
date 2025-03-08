@@ -7,8 +7,16 @@
 
 #include "ADC.h"
 #include "HID.h"
+#include "ST7789.h"
 
 uint16_t potentiometerVal = 0;
+
+ST7789_t lcd = {
+    .CS = PIN(B, PB6),
+    .DC = PIN(B, PB4),
+    .RST = PIN(B, PB5),
+    .BLK = PIN(C, PC7),
+};
 
 int __attribute__((noreturn)) main(void) {
   wdt_disable();
@@ -16,6 +24,8 @@ int __attribute__((noreturn)) main(void) {
   USB_Init();
   GlobalInterruptEnable();
   adc_init();
+  ST7789_Init(&lcd);
+  ST7789_ClearScreen(&lcd, WHITE);
 
   for (;;) {
     potentiometerVal = adc_read(PF7);
