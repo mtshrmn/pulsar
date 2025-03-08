@@ -1,7 +1,7 @@
 #include "HID.h"
 #include "Descriptors.h"
 
-static uint8_t PotentiometerValue = 0;
+static uint16_t PotentiometerValue = 0;
 static uint8_t PrevHIDReportBuffer[REPORT_SIZE];
 static USB_ClassInfo_HID_Device_t HIDInterface = {
     .Config =
@@ -29,8 +29,8 @@ bool CALLBACK_HID_Device_CreateHIDReport(
 
   uint8_t *Report = (uint8_t *)ReportData;
 
-  Report[0] = PotentiometerValue;
-  Report[1] = 0;
+  Report[0] = (PotentiometerValue >> 8) & 0xFF;
+  Report[1] = PotentiometerValue & 0xFF;
   Report[2] = 0;
   Report[3] = 0;
   Report[4] = 0;
@@ -62,4 +62,4 @@ void EVENT_USB_Device_ConfigurationChanged(void) {
 
 void HID_Task(void) { HID_Device_USBTask(&HIDInterface); }
 
-void setPotentiometerValue(uint8_t value) { PotentiometerValue = value; }
+void setPotentiometerValue(uint16_t value) { PotentiometerValue = value; }

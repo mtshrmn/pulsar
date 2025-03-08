@@ -19,6 +19,6 @@ bool CALLBACK_HIDParser_FilterHIDReportItem(
     HID_ReportItem_t *const CurrentItem);
 
 void HID_Task(void);
-void setPotentiometerValue(uint8_t value);
+void setPotentiometerValue(uint16_t value);
 
 #endif // !HID_H

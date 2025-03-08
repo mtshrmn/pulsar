@@ -8,7 +8,7 @@
 #include "ADC.h"
 #include "HID.h"
 
-uint8_t potentiometerVal = 0;
+uint16_t potentiometerVal = 0;
 
 int __attribute__((noreturn)) main(void) {
   wdt_disable();
