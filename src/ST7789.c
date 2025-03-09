@@ -102,9 +102,25 @@ static inline void __set_color(ST7789_t *display, uint16_t color) {
   CLRPORT(&display->DC);
   SPI_Transfer(RAMWR);
   SETPORT(&display->DC);
-  for (uint32_t i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH; ++i) {
-    SPI_Transfer(HIGH(color));
-    SPI_Transfer(LOW(color));
+  // since uint8_t cant hold (SCREEN_WIDTH * SCREEN_HEIGHT)
+  // using a simple for-loop will be a slowdown
+  // instead, an ugly hack is being used
+
+  // first do 256*256 iterations
+  for (uint8_t i = 0; i < 0xFF; ++i) {
+    for (uint8_t j = 0; j < 0xFF; ++j) {
+      SPI_Transfer(HIGH(color));
+      SPI_Transfer(LOW(color));
+    }
+  }
+
+  // assuming remainder can hold that number
+  uint8_t remainder = (SCREEN_HEIGHT * SCREEN_WIDTH / 256) - 256;
+  for (uint8_t i = 0; i < remainder; ++i) {
+    for (uint8_t j = 0; j < 0xFF; ++j) {
+      SPI_Transfer(HIGH(color));
+      SPI_Transfer(LOW(color));
+    }
   }
 }
 

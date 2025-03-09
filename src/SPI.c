@@ -8,11 +8,14 @@ void SPI_Init(void) {
   DDRB &= ~(1 << SPI_MISO);
 
   SPCR = (1 << SPE) | (1 << MSTR);
-  SPCR |= (1 << SPI2X);
+  SPSR |= (1 << SPI2X);
 }
 
-void SPI_Transfer(uint8_t data) {
+inline void SPI_Transfer(uint8_t data) {
   SPDR = data;
-  while (!(SPSR & (1 << SPIF)))
-    ;
+  // wait 4*2 cycles
+  __asm__ volatile("rjmp .+0\n"
+                   "rjmp .+0\n"
+                   "rjmp .+0\n"
+                   "rjmp .+0\n");
 }
