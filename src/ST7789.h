@@ -26,6 +26,7 @@
 
 // RGB565 colors
 #define WHITE 0xFFFF
+#define RED 0xE062
 
 typedef struct {
   volatile uint8_t *ddr;
@@ -42,5 +43,7 @@ typedef struct {
 
 void ST7789_Init(ST7789_t *display);
 void ST7789_ClearScreen(ST7789_t *display, uint16_t color);
+void ST7789_FilledCircle(ST7789_t *display, uint16_t x, uint16_t y,
+                         uint16_t radius, uint16_t color);
 
 #endif

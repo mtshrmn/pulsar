@@ -78,24 +78,37 @@ static inline void __reset_hw(ST7789_t *display) {
   _delay_ms(120);
 }
 
-static inline void __set_window(ST7789_t *display) {
+static inline void __set_window(ST7789_t *display, uint16_t x0, uint16_t y0,
+                                uint16_t x1, uint16_t y1) {
   CLRPORT(&display->DC);
   SPI_Transfer(CASET);
 
   SETPORT(&display->DC);
-  SPI_Transfer(HIGH(0));
-  SPI_Transfer(LOW(0));
-  SPI_Transfer(HIGH(SCREEN_WIDTH));
-  SPI_Transfer(LOW(SCREEN_WIDTH));
+  SPI_Transfer(HIGH(x0));
+  SPI_Transfer(LOW(x0));
+  SPI_Transfer(HIGH(x1));
+  SPI_Transfer(LOW(x1));
 
   CLRPORT(&display->DC);
   SPI_Transfer(RASET);
 
   SETPORT(&display->DC);
-  SPI_Transfer(HIGH(0));
-  SPI_Transfer(LOW(0));
-  SPI_Transfer(HIGH(SCREEN_HEIGHT));
-  SPI_Transfer(LOW(SCREEN_HEIGHT));
+  SPI_Transfer(HIGH(y0));
+  SPI_Transfer(LOW(y0));
+  SPI_Transfer(HIGH(y1));
+  SPI_Transfer(LOW(y1));
+}
+
+static inline void __set_color_small(ST7789_t *display, uint16_t color,
+                                     uint8_t count) {
+
+  CLRPORT(&display->DC);
+  SPI_Transfer(RAMWR);
+  SETPORT(&display->DC);
+  while (count--) {
+    SPI_Transfer(HIGH(color));
+    SPI_Transfer(LOW(color));
+  }
 }
 
 static inline void __set_color(ST7789_t *display, uint16_t color) {
@@ -137,7 +150,38 @@ void ST7789_Init(ST7789_t *display) {
 
 void ST7789_ClearScreen(ST7789_t *display, uint16_t color) {
   CLRPORT(&display->CS);
-  __set_window(display);
+  __set_window(display, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   __set_color(display, color);
+  SETPORT(&display->CS);
+}
+
+void ST7789_FilledCircle(ST7789_t *display, uint16_t x, uint16_t y,
+                         uint16_t radius, uint16_t color) {
+  // http://fredericgoset.ovh/mathematiques/courbes/en/filled_circle.html
+  uint16_t px = 0;
+  uint16_t py = radius;
+  int16_t m = 5 - 4 * radius;
+
+  CLRPORT(&display->CS);
+  while (px <= py) {
+    __set_window(display, x - py, y - px, x + py, y - px + 1);
+    __set_color_small(display, color, 2 * py);
+
+    __set_window(display, x - py, y + px, x + py, y + px + 1);
+    __set_color_small(display, color, 2 * py);
+
+    if (m > 0) {
+      __set_window(display, x - px, y - py, x + px, y - py + 1);
+      __set_color_small(display, color, 2 * px);
+
+      __set_window(display, x - px, y + py, x + px, y + py + 1);
+      __set_color_small(display, color, 2 * px);
+      py--;
+      m -= 8 * py;
+    }
+    px++;
+    m += 8 * px + 4;
+  }
+
   SETPORT(&display->CS);
 }

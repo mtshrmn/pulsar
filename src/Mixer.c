@@ -26,6 +26,7 @@ int __attribute__((noreturn)) main(void) {
   adc_init();
   ST7789_Init(&lcd);
   ST7789_ClearScreen(&lcd, WHITE);
+  ST7789_FilledCircle(&lcd, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 60, RED);
 
   for (;;) {
     potentiometerVal = adc_read(PF7);
