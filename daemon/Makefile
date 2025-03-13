@@ -21,5 +21,5 @@ $(BUILDDIR)/$(TARGET): $(OBJ)
 $(shell mkdir -p $(BUILDDIR))
 
 clean:
-	rm -f $(TARGET) $(OBJ)
+	rm -f $(BUILDDIR)/$(TARGET) $(OBJ)
 	rmdir $(BUILDDIR)
