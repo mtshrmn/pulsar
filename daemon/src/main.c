@@ -1,10 +1,11 @@
-#include "log.h"
 #include <errno.h>
 #include <linux/netlink.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include "hidapi.h"
+#include "log.h"
 
 #define UEVENT_BUFFER_SIZE 256
 
@@ -41,7 +42,10 @@ int main(void) {
     }
 
     // attempt connection to device
-    LOGI("recieved uevent - \"%s\"", buffer);
+    ret = connect_to_device(buffer, sizeof(buffer));
+    if (ret < 0) {
+      goto out;
+    }
   }
 
 out:

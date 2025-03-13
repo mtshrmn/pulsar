@@ -6,9 +6,9 @@ BUILDDIR = build/
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
 
-CFLAGS = -std=c99 -Wall -Wextra -pedantic
+CFLAGS = -Wall -Wextra -pedantic
 CFLAGS += -DLOGLEVEL_INFO
-LIBS = -I./include/
+LIBS = -I./include/ -lhidapi-hidraw
 
 all: $(BUILDDIR)/$(TARGET)
 
