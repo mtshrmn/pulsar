@@ -42,11 +42,6 @@ bool CALLBACK_HID_Device_CreateHIDReport(
   return false;
 }
 
-void CALLBACK_HID_Device_ProcessHIDReport(
-    USB_ClassInfo_HID_Device_t *const HIDInterfaceInfo, const uint8_t ReportID,
-    const uint8_t ReportType, const void *ReportData,
-    const uint16_t ReportSize) {}
-
 void EVENT_USB_Device_ControlRequest(void) {
   HID_Device_ProcessControlRequest(&HIDInterface);
 }

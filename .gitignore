@@ -3,3 +3,4 @@ compile_commands.json
 *.hex
 *.o
 .cache/
+build/
