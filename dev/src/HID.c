@@ -1,60 +1,46 @@
 #include "HID.h"
 #include "Descriptors.h"
 
-static uint16_t PotentiometerValue = 0;
-static uint8_t PrevHIDReportBuffer[REPORT_SIZE];
-static USB_ClassInfo_HID_Device_t HIDInterface = {
-    .Config =
-        {
-            .InterfaceNumber = INTERFACE_ID,
-            .ReportINEndpoint =
-                {
-                    .Address = IN_EPADDR,
-                    .Size = EPSIZE,
-                    .Banks = 1,
-                },
-            .PrevReportINBuffer = PrevHIDReportBuffer,
-            .PrevReportINBufferSize = sizeof(PrevHIDReportBuffer),
-        },
-};
-
-bool CALLBACK_HIDParser_FilterHIDReportItem(
-    HID_ReportItem_t *const CurrentItem) {
-  return true;
-}
-
-bool CALLBACK_HID_Device_CreateHIDReport(
-    USB_ClassInfo_HID_Device_t *const HIDInterfaceInfo, uint8_t *const ReportID,
-    const uint8_t ReportType, void *ReportData, uint16_t *const ReportSize) {
-
-  uint8_t *Report = (uint8_t *)ReportData;
-
-  Report[0] = (PotentiometerValue >> 8) & 0xFF;
-  Report[1] = PotentiometerValue & 0xFF;
-  Report[2] = 0;
-  Report[3] = 0;
-  Report[4] = 0;
-  Report[5] = 0;
-  Report[6] = 0;
-  Report[7] = 0;
-
-  *ReportSize = REPORT_SIZE;
-  return false;
-}
-
-void EVENT_USB_Device_ControlRequest(void) {
-  HID_Device_ProcessControlRequest(&HIDInterface);
-}
-
-void EVENT_USB_Device_StartOfFrame(void) {
-  HID_Device_MillisecondElapsed(&HIDInterface);
-}
+extern void Bulk_ProcessData(uint8_t *buf, size_t size);
+extern void HID_ProcessReport(uint8_t *buf, size_t size);
+extern void HID_CreateReport(uint8_t *buf, size_t size);
 
 void EVENT_USB_Device_ConfigurationChanged(void) {
-  Endpoint_ConfigureEndpoint(IN_EPADDR, EP_TYPE_INTERRUPT, EPSIZE, 1);
-  Endpoint_ConfigureEndpoint(OUT_EPADDR, EP_TYPE_INTERRUPT, EPSIZE, 1);
+  Endpoint_ConfigureEndpoint(HID_IN_EPADDR, EP_TYPE_INTERRUPT, HID_EPSIZE, 1);
+  Endpoint_ConfigureEndpoint(HID_OUT_EPADDR, EP_TYPE_INTERRUPT, HID_EPSIZE, 1);
+  Endpoint_ConfigureEndpoint(BULK_OUT_EPADDR, EP_TYPE_BULK, BULK_EPSIZE, 1);
 }
 
-void HID_Task(void) { HID_Device_USBTask(&HIDInterface); }
+void Bulk_Task(void) {
+  Endpoint_SelectEndpoint(BULK_OUT_EPADDR);
 
-void setPotentiometerValue(uint16_t value) { PotentiometerValue = value; }
+  if (Endpoint_IsOUTReceived()) {
+    uint8_t buffer[BULK_EPSIZE];
+    uint16_t bytesReceived = Endpoint_BytesInEndpoint();
+
+    if (bytesReceived)
+      Endpoint_Read_Stream_LE(buffer, bytesReceived, NULL);
+
+    Endpoint_ClearOUT();
+    Bulk_ProcessData(buffer, BULK_EPSIZE);
+  }
+}
+
+void HID_Task(void) {
+  Endpoint_SelectEndpoint(HID_OUT_EPADDR);
+  if (Endpoint_IsOUTReceived()) {
+    uint8_t out_buf[HID_EPSIZE];
+    Endpoint_Read_Stream_LE(out_buf, HID_EPSIZE, NULL);
+    Endpoint_ClearOUT();
+    HID_ProcessReport(out_buf, HID_EPSIZE);
+  }
+
+  // HID IN
+  Endpoint_SelectEndpoint(HID_IN_EPADDR);
+  if (Endpoint_IsINReady()) {
+    uint8_t in_buf[HID_EPSIZE] = {0};
+    HID_CreateReport(in_buf, HID_EPSIZE);
+    Endpoint_Write_Stream_LE(in_buf, HID_EPSIZE, NULL);
+    Endpoint_ClearIN();
+  }
+}

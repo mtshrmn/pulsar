@@ -22,14 +22,19 @@ ST7789_t lcd = {
 bool a = false;
 uint16_t color = WHITE;
 
-void CALLBACK_HID_Device_ProcessHIDReport(
-    USB_ClassInfo_HID_Device_t *const HIDInterfaceInfo, const uint8_t ReportID,
-    const uint8_t ReportType, const void *ReportData,
-    const uint16_t ReportSize) {
+void Bulk_ProcessData(uint8_t *buf, size_t size) {
+  //
+  return;
+}
 
-  uint8_t *Report = (uint8_t *)ReportData;
-  color = (Report[0] << 8) | Report[1];
+void HID_ProcessReport(uint8_t *report, size_t size) {
+  color = (report[0] << 8) | report[1];
   a = true;
+}
+
+void HID_CreateReport(uint8_t *buf, size_t size) {
+  //
+  return;
 }
 
 int __attribute__((noreturn)) main(void) {
@@ -43,7 +48,6 @@ int __attribute__((noreturn)) main(void) {
 
   for (;;) {
     potentiometerVal = adc_read(PF7);
-    setPotentiometerValue(potentiometerVal);
     USB_USBTask();
     HID_Task();
     if (a) {
