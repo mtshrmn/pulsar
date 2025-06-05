@@ -13,7 +13,7 @@ LIBS = -I./include/ -lusb-1.0 -lm
 all: $(BUILDDIR)/$(TARGET)
 
 run: $(BUILDDIR)/$(TARGET)
-	sudo ./$(BUILDDIR)/$(TARGET)
+	./$(BUILDDIR)/$(TARGET)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(LIBS) -c $< -o $@
