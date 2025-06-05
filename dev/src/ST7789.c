@@ -185,3 +185,21 @@ void ST7789_FilledCircle(ST7789_t *display, uint16_t x, uint16_t y,
 
   SETPORT(&display->CS);
 }
+
+void ST7789_StartWriteRaw(ST7789_t *display, uint16_t x0, uint16_t y0,
+                          uint16_t x1, uint16_t y1) {
+  CLRPORT(&display->CS);
+  __set_window(display, x0, y0, x1, y1);
+  // start of __set_color
+  CLRPORT(&display->DC);
+  SPI_Transfer(RAMWR);
+  SETPORT(&display->DC);
+}
+
+void ST7789_WriteRaw(ST7789_t *display, uint8_t *data, size_t len) {
+  for (size_t i = 0; i < len; ++i) {
+    SPI_Transfer(data[i]);
+  }
+}
+
+void ST7789_StopWriteRaw(ST7789_t *display) { SETPORT(&display->CS); }

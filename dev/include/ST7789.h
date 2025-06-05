@@ -2,6 +2,7 @@
 #define ST7789_H
 
 #include <avr/io.h>
+#include <stddef.h>
 
 #define PIN(letter, number)                                                    \
   (__Pin_t) { .ddr = &DDR##letter, .port = &PORT##letter, .pin = number }
@@ -45,5 +46,9 @@ void ST7789_Init(ST7789_t *display);
 void ST7789_ClearScreen(ST7789_t *display, uint16_t color);
 void ST7789_FilledCircle(ST7789_t *display, uint16_t x, uint16_t y,
                          uint16_t radius, uint16_t color);
+void ST7789_StartWriteRaw(ST7789_t *display, uint16_t x0, uint16_t y0,
+                          uint16_t x1, uint16_t y1);
+void ST7789_WriteRaw(ST7789_t *display, uint8_t *data, size_t len);
+void ST7789_StopWriteRaw(ST7789_t *display);
 
 #endif

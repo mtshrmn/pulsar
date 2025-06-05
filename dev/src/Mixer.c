@@ -20,11 +20,32 @@ ST7789_t lcd = {
 };
 
 bool a = false;
+bool is_transmitting_image = false;
+uint32_t len = 0;
+ImageData image_data;
 uint16_t color = WHITE;
 
 void Bulk_ProcessData(uint8_t *buf, size_t size) {
-  //
-  return;
+  if (is_transmitting_image == false) {
+    is_transmitting_image = true;
+    len = 0;
+    image_data = *(ImageData *)buf;
+    // clang-format off
+    ST7789_StartWriteRaw(&lcd, image_data.x0, image_data.y0,
+                         image_data.x1, image_data.y1);
+    // clang-format on
+
+    return;
+  }
+
+  len += size;
+  ST7789_WriteRaw(&lcd, buf, size);
+
+  if (len >= image_data.data_len) {
+    is_transmitting_image = false;
+    ST7789_StopWriteRaw(&lcd);
+    return;
+  }
 }
 
 void HID_ProcessReport(uint8_t *report, size_t size) {
@@ -50,6 +71,7 @@ int __attribute__((noreturn)) main(void) {
     potentiometerVal = adc_read(PF7);
     USB_USBTask();
     HID_Task();
+    Bulk_Task();
     if (a) {
       ST7789_FilledCircle(&lcd, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 60, color);
       a = false;

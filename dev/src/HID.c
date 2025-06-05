@@ -22,7 +22,7 @@ void Bulk_Task(void) {
       Endpoint_Read_Stream_LE(buffer, bytesReceived, NULL);
 
     Endpoint_ClearOUT();
-    Bulk_ProcessData(buffer, BULK_EPSIZE);
+    Bulk_ProcessData(buffer, bytesReceived);
   }
 }
 

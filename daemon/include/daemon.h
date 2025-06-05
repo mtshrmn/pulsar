@@ -7,7 +7,6 @@
 #define HID_REPORT_SIZE 8
 #define INTERFACE 0
 #define HID_EP_OUT 0x02
-#define BULK_EP_OUT 0x03
 
 void daemon_run(void);
 

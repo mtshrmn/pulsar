@@ -2,12 +2,23 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "bulk.h"
 #include "daemon.h"
 #include "log.h"
 
+static int daemon_hid_write(libusb_device_handle *handle, uint8_t *report,
+                            size_t size) {
+  int len, ret;
+  ret = libusb_interrupt_transfer(handle, HID_EP_OUT, report, size, &len, 1000);
+  if (ret < 0) {
+    return ret;
+  }
+
+  return len;
+}
+
 void daemon_run(void) {
   int ret;
-  int len;
   libusb_device_handle *handle = NULL;
   uint8_t hid_report[HID_REPORT_SIZE] = {0};
 
@@ -30,10 +41,14 @@ void daemon_run(void) {
     return;
   }
 
-  ret = libusb_interrupt_transfer(handle, HID_EP_OUT, hid_report,
-                                  sizeof(hid_report), &len, 1000);
-  if (ret != 0 || len != sizeof(hid_report)) {
+  ret = daemon_hid_write(handle, hid_report, sizeof(hid_report));
+  if (ret != sizeof(hid_report)) {
     LOGE("error sending HID report [%d] - %s", ret, libusb_error_name(ret));
+    goto out;
+  }
+
+  ret = bulk_send_image(handle, "img/car2.png", 15, 40);
+  if (ret != 0) {
     goto out;
   }
 
