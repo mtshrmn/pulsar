@@ -4,7 +4,7 @@
 static void sink_input_info_cb(pa_context *ctx, const pa_sink_input_info *info,
                                int eol, void *data) {
   (void)data;
-  if (eol || info == 0) {
+  if (eol || info == NULL) {
     return;
   }
 
