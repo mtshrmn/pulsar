@@ -26,8 +26,11 @@ static void sink_input_info_cb(pa_context *ctx, const pa_sink_input_info *info,
   // const char *icon_name =
   // pa_proplist_gets(info->proplist, PA_PROP_APPLICATION_ICON_NAME);
   char *app_name_cpy = strdup(app_name);
+  pa_volume_t volume = pa_cvolume_avg(&info->volume);
+  double volume_percent = (volume * 100.f) / PA_VOLUME_NORM;
+  LOGI("%s - %f%%", app_name_cpy, volume_percent);
 
-  ret = update_sinks(app_name_cpy);
+  ret = update_sinks(app_name_cpy, volume_percent);
   if (ret != 0) {
     pa_mainloop_quit(daemon_ctx.mainloop, 1);
   }

@@ -9,10 +9,11 @@
 
 typedef struct {
   char *name;
+  double volume;
   bool is_stale;
 } SinkInput;
 
 int sink_input_info_cleanup(void);
-int update_sinks(char *name);
+int update_sinks(char *name, double volume);
 
 #endif // !SINKCTL_H

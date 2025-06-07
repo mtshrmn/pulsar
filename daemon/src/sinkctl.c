@@ -13,9 +13,10 @@ static void sinkinput_free(SinkInput *si) {
   free(si);
 }
 
-static SinkInput *sinkinput_create(char *name) {
+static SinkInput *sinkinput_create(char *name, double volume) {
   SinkInput *si = malloc(sizeof(SinkInput));
   si->name = name;
+  si->volume = volume;
   si->is_stale = false;
   return si;
 }
@@ -25,7 +26,7 @@ static int clear_display(uint8_t index) {
   return hid_write(report, sizeof(report));
 }
 
-int update_sinks(char *name) {
+int update_sinks(char *name, double volume) {
   // TODO: replace with actual logo fetching.
   char *image = "img/car2.png";
   if (strcmp(name, "Spotify") == 0) {
@@ -72,7 +73,7 @@ int update_sinks(char *name) {
     }
   }
 
-  sinks[0] = sinkinput_create(name);
+  sinks[0] = sinkinput_create(name, volume);
   clear_display(0);
   ret = bulk_send_image(daemon_ctx.handle, 0, image, 20, 20);
   return ret;
