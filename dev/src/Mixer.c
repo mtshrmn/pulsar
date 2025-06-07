@@ -49,8 +49,10 @@ void Bulk_ProcessData(uint8_t *buf, size_t size) {
 }
 
 void HID_ProcessReport(uint8_t *report, size_t size) {
-  color = (report[0] << 8) | report[1];
-  a = true;
+  if (report[0] == 0) {
+    ST7789_ClearScreen(&lcd, WHITE);
+    return;
+  }
 }
 
 void HID_CreateReport(uint8_t *buf, size_t size) {

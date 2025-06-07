@@ -16,8 +16,8 @@ RGB565 rgb888_to_rgb565(RGB888 *color) {
   return rgb565;
 }
 
-int bulk_send_image(libusb_device_handle *handle, const char *image_path,
-                    uint16_t x0, uint8_t y0) {
+int bulk_send_image(libusb_device_handle *handle, uint8_t index,
+                    const char *image_path, uint16_t x0, uint8_t y0) {
   int width;
   int height;
   int channels;
@@ -34,6 +34,7 @@ int bulk_send_image(libusb_device_handle *handle, const char *image_path,
        channels);
 
   header = (ImageHeader){
+      .index = index,
       .x0 = x0,
       .x1 = x0 + width - 1,
       .y0 = y0,

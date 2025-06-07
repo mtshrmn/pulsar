@@ -53,7 +53,7 @@ void *daemon_worker(void *arg) {
 
     do {
       ret = daemon_run();
-    } while (ret != 0);
+    } while (ret == DAEMON_RETURN_RETRY);
   }
 
   return NULL;

@@ -8,27 +8,15 @@
 
 Context daemon_ctx;
 
-static int daemon_hid_write(libusb_device_handle *handle, uint8_t *report,
-                            size_t size) {
-  int len, ret;
-  ret = libusb_interrupt_transfer(handle, HID_EP_OUT, report, size, &len, 1000);
-  if (ret < 0) {
-    return ret;
-  }
-
-  return len;
-}
-
 int daemon_run(void) {
   int ret = 0;
-  uint8_t hid_report[HID_REPORT_SIZE] = {0};
 
   LOGI("starting daemon");
 
   daemon_ctx.handle = libusb_open_device_with_vid_pid(NULL, VID, PID);
   if (daemon_ctx.handle == NULL) {
     LOGE("failed opening HID device");
-    return 0;
+    return DAEMON_RETURN_NORETRY;
   }
 
   if (libusb_kernel_driver_active(daemon_ctx.handle, INTERFACE) == 1) {
@@ -39,18 +27,20 @@ int daemon_run(void) {
   if (ret != 0) {
     LOGE("libusb failed to claim interface");
     libusb_close(daemon_ctx.handle);
-    return 0;
+    return DAEMON_RETURN_NORETRY;
   }
 
   daemon_ctx.mainloop = pa_mainloop_new();
   if (daemon_ctx.mainloop == NULL) {
     LOGE("error setting up pulseaudio mainloop");
+    ret = DAEMON_RETURN_NORETRY;
     goto out;
   }
 
   pa_mainloop_api *mainloop_api = pa_mainloop_get_api(daemon_ctx.mainloop);
   if (mainloop_api == NULL) {
     LOGE("error getting pulseaudio mainloop api");
+    ret = DAEMON_RETURN_NORETRY;
     goto out;
   }
 
@@ -61,20 +51,9 @@ int daemon_run(void) {
 
   LOGI("starting pulseaudio mainloop");
   pa_mainloop_run(daemon_ctx.mainloop, &ret);
-  if (ret != 0) {
-    LOGE("pulseaudio mainloop quit unexpectedly");
+  if (ret == DAEMON_RETURN_RETRY) {
+    LOGE("pulseaudio mainloop quit unexpectedly, restarting daemon");
   }
-
-  // ret = daemon_hid_write(handle, hid_report, sizeof(hid_report));
-  // if (ret != sizeof(hid_report)) {
-  //   LOGE("error sending HID report [%d] - %s", ret, libusb_error_name(ret));
-  //   goto out;
-  // }
-  //
-  // ret = bulk_send_image(handle, "img/car2.png", 15, 40);
-  // if (ret != 0) {
-  //   goto out;
-  // }
 
 out:
   pa_context_disconnect(daemon_ctx.pa_ctx);

@@ -26,7 +26,7 @@ typedef struct __attribute__((packed, aligned(1))) {
   uint32_t data_len;
 } ImageHeader;
 
-int bulk_send_image(libusb_device_handle *handle, const char *image_path,
-                    uint16_t x0, uint8_t y0);
+int bulk_send_image(libusb_device_handle *handle, uint8_t index,
+                    const char *image_path, uint16_t x0, uint8_t y0);
 
 #endif // !BULK_H
