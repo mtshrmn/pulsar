@@ -16,7 +16,7 @@ static void sink_input_info_cb(pa_context *ctx, const pa_sink_input_info *info,
   if (eol || info == NULL) {
     ret = sink_input_info_cleanup();
     if (ret != 0) {
-      pa_mainloop_quit(daemon_ctx.mainloop, 1);
+      pa_mainloop_quit(daemon_ctx.mainloop, DAEMON_RETURN_NORETRY);
     }
     return;
   }
@@ -32,12 +32,12 @@ static void sink_input_info_cb(pa_context *ctx, const pa_sink_input_info *info,
 
   ret = update_sinks(app_name_cpy, volume_percent);
   if (ret != 0) {
-    pa_mainloop_quit(daemon_ctx.mainloop, 1);
+    pa_mainloop_quit(daemon_ctx.mainloop, DAEMON_RETURN_NORETRY);
   }
 }
 
 static void get_sink_input_info_list(pa_context *ctx) {
-  LOGI("displatching operation get_sink_input_info_list");
+  LOGI("dispatching operation get_sink_input_info_list");
   pa_operation *op;
   op = pa_context_get_sink_input_info_list(ctx, sink_input_info_cb, NULL);
   pa_operation_unref(op);

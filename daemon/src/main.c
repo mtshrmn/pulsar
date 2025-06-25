@@ -39,7 +39,7 @@ static int LIBUSB_CALL hp_callback(struct libusb_context *ctx,
 }
 
 void *daemon_worker(void *arg) {
-  (void)arg;
+  libusb_context *ctx = (libusb_context *)arg;
   int ret = 0;
   // signal to master that daemon is ready.
   pthread_mutex_lock(&mtx);
@@ -52,7 +52,7 @@ void *daemon_worker(void *arg) {
     pthread_mutex_unlock(&mtx);
 
     do {
-      ret = daemon_run();
+      ret = daemon_run(ctx);
     } while (ret == DAEMON_RETURN_RETRY);
   }
 
