@@ -4,6 +4,7 @@
 
 #include "bulk.h"
 #include "daemon.h"
+#include "hid.h"
 #include "log.h"
 #include "pulseaudio.h"
 
@@ -44,6 +45,8 @@ void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer) {
     printf("Got report (%d bytes): ", transfer->actual_length);
     for (int i = 0; i < transfer->actual_length; ++i)
       printf("%02x ", transfer->buffer[i]);
+
+    hid_write_async(transfer->buffer, transfer->actual_length);
     printf("\n");
 
     libusb_submit_transfer(transfer);

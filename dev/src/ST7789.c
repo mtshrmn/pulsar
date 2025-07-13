@@ -1,5 +1,6 @@
 #include "ST7789.h"
 #include "SPI.h"
+#include <avr/pgmspace.h>
 #include <util/delay.h>
 
 #define __SETBIT(reg, bit) ((reg) |= (1 << (bit)))
@@ -148,41 +149,31 @@ void ST7789_Init(ST7789_t *display) {
   __madctl(display);
 }
 
+void __draw_rect(ST7789_t *display, uint16_t color, uint16_t x0, uint16_t y0,
+                 uint16_t x1, uint16_t y1) {
+  CLRPORT(&display->CS);
+  __set_window(display, x0, y0, x1, y1);
+
+  uint16_t count = (x1 - x0 + 1) * (y1 - y0 + 1);
+  if (count <= UINT8_MAX) {
+    __set_color_small(display, color, count);
+  } else {
+    CLRPORT(&display->DC);
+    SPI_Transfer(RAMWR);
+    SETPORT(&display->DC);
+    while (count--) {
+      SPI_Transfer(HIGH(color));
+      SPI_Transfer(LOW(color));
+    }
+  }
+
+  SETPORT(&display->CS);
+}
+
 void ST7789_ClearScreen(ST7789_t *display, uint16_t color) {
   CLRPORT(&display->CS);
   __set_window(display, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   __set_color(display, color);
-  SETPORT(&display->CS);
-}
-
-void ST7789_FilledCircle(ST7789_t *display, uint16_t x, uint16_t y,
-                         uint16_t radius, uint16_t color) {
-  // http://fredericgoset.ovh/mathematiques/courbes/en/filled_circle.html
-  uint16_t px = 0;
-  uint16_t py = radius;
-  int16_t m = 5 - 4 * radius;
-
-  CLRPORT(&display->CS);
-  while (px <= py) {
-    __set_window(display, x - py, y - px, x + py, y - px + 1);
-    __set_color_small(display, color, 2 * py);
-
-    __set_window(display, x - py, y + px, x + py, y + px + 1);
-    __set_color_small(display, color, 2 * py);
-
-    if (m > 0) {
-      __set_window(display, x - px, y - py, x + px, y - py + 1);
-      __set_color_small(display, color, 2 * px);
-
-      __set_window(display, x - px, y + py, x + px, y + py + 1);
-      __set_color_small(display, color, 2 * px);
-      py--;
-      m -= 8 * py;
-    }
-    px++;
-    m += 8 * px + 4;
-  }
-
   SETPORT(&display->CS);
 }
 
@@ -203,3 +194,26 @@ void ST7789_WriteRaw(ST7789_t *display, uint8_t *data, size_t len) {
 }
 
 void ST7789_StopWriteRaw(ST7789_t *display) { SETPORT(&display->CS); }
+
+void ST7789_DrawVolumeBar(ST7789_t *display) {
+  __draw_rect(display, RED, 40, 240, 200, 242);
+  __draw_rect(display, RED, 40, 258, 200, 260);
+  __draw_rect(display, RED, 40, 240, 42, 260);
+  __draw_rect(display, RED, 198, 240, 200, 260);
+}
+
+void ST7789_UpdateVolumeBar(ST7789_t *display, uint8_t volume,
+                            uint8_t *prev_volume) {
+  if (volume == *prev_volume) {
+    return;
+  }
+  uint8_t volume_pos = (uint16_t)volume * 152 / 100 + 44;
+  uint8_t prev_volume_pos = (uint16_t)*prev_volume * 152 / 100 + 44;
+  if (volume > *prev_volume) {
+    __draw_rect(display, RED, prev_volume_pos, 244, volume_pos, 256);
+  } else {
+    __draw_rect(display, WHITE, volume_pos, 244, prev_volume_pos, 256);
+  }
+
+  *prev_volume = volume;
+}

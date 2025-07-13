@@ -34,13 +34,4 @@ void HID_Task(void) {
     Endpoint_ClearOUT();
     HID_ProcessReport(out_buf, HID_EPSIZE);
   }
-
-  // HID IN
-  Endpoint_SelectEndpoint(HID_IN_EPADDR);
-  if (Endpoint_IsINReady()) {
-    uint8_t in_buf[HID_EPSIZE] = {0};
-    HID_CreateReport(in_buf, HID_EPSIZE);
-    Endpoint_Write_Stream_LE(in_buf, HID_EPSIZE, NULL);
-    Endpoint_ClearIN();
-  }
 }

@@ -22,8 +22,8 @@ static SinkInput *sinkinput_create(char *name, double volume) {
 }
 
 static int clear_display(uint8_t index) {
-  uint8_t report[1] = {index};
-  return hid_write(report, sizeof(report));
+  uint8_t report[2] = {index, 1};
+  return hid_write_async(report, sizeof(report));
 }
 
 int update_sinks(char *name, double volume) {

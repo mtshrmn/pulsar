@@ -50,5 +50,7 @@ void ST7789_StartWriteRaw(ST7789_t *display, uint16_t x0, uint16_t y0,
                           uint16_t x1, uint16_t y1);
 void ST7789_WriteRaw(ST7789_t *display, uint8_t *data, size_t len);
 void ST7789_StopWriteRaw(ST7789_t *display);
-
+void ST7789_UpdateVolumeBar(ST7789_t *display, uint8_t volume,
+                            uint8_t *prev_volume);
+void ST7789_DrawVolumeBar(ST7789_t *display);
 #endif
