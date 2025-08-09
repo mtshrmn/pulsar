@@ -1,9 +1,7 @@
 #ifndef PULSEAUDIO_H
 #define PULSEAUDIO_H
 
-#include <pulse/pulseaudio.h>
-#include <stdbool.h>
+#include "daemon.h"
 
-void context_state_cb(pa_context *ctx, void *data);
-
+enum DaemonReturnType setup_pulseaudio_mainloop(void);
 #endif // !PULSEAUDIO_H

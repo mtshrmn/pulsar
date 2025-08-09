@@ -1,66 +1,65 @@
 #include "pulseaudio.h"
-#include "bulk.h"
-#include "daemon.h"
 #include "log.h"
-#include "sinkctl.h"
-#include <string.h>
+#include <pulse/pulseaudio.h>
 
-extern Context daemon_ctx;
+static void libusb_io_cb(pa_mainloop_api *api, pa_io_event *e, int fd,
+                         pa_io_event_flags_t events, void *userdata) {
 
-static void sink_input_info_cb(pa_context *ctx, const pa_sink_input_info *info,
-                               int eol, void *data) {
-  (void)ctx;
-  (void)data;
-  int ret = 0;
+  (void)api;
+  (void)e;
+  (void)fd;
+  (void)events;
+  (void)userdata;
+  struct timeval tv = {0, 0};
+  libusb_handle_events_timeout(NULL, &tv);
+}
 
-  if (eol || info == NULL) {
-    ret = sink_input_info_cleanup();
-    if (ret != 0) {
-      pa_mainloop_quit(daemon_ctx.mainloop, DAEMON_RETURN_NORETRY);
+static void register_libusb_pollfds_with_pa(pa_mainloop_api *api) {
+  const struct libusb_pollfd **poll_fds = libusb_get_pollfds(NULL);
+  for (size_t i = 0; poll_fds[i]; ++i) {
+    LOGI("adding poll_fd[%zu]", i);
+    pa_io_event_flags_t flags = 0;
+    if (poll_fds[i]->events & POLL_IN) {
+      flags |= PA_IO_EVENT_INPUT;
     }
-    return;
-  }
 
-  const char *app_name =
-      pa_proplist_gets(info->proplist, PA_PROP_APPLICATION_NAME);
-  // const char *icon_name =
-  // pa_proplist_gets(info->proplist, PA_PROP_APPLICATION_ICON_NAME);
-  char *app_name_cpy = strdup(app_name);
-  pa_volume_t volume = pa_cvolume_avg(&info->volume);
-  double volume_percent = (volume * 100.f) / PA_VOLUME_NORM;
-  LOGI("%s - %f%%", app_name_cpy, volume_percent);
+    if (poll_fds[i]->events & POLL_OUT) {
+      flags |= PA_IO_EVENT_OUTPUT;
+    }
 
-  ret = update_sinks(app_name_cpy, volume_percent);
-  if (ret != 0) {
-    pa_mainloop_quit(daemon_ctx.mainloop, DAEMON_RETURN_NORETRY);
+    api->io_new(api, poll_fds[i]->fd, flags, libusb_io_cb, NULL);
   }
 }
 
-static void get_sink_input_info_list(pa_context *ctx) {
-  LOGI("dispatching operation get_sink_input_info_list");
-  pa_operation *op;
-  op = pa_context_get_sink_input_info_list(ctx, sink_input_info_cb, NULL);
-  pa_operation_unref(op);
-}
+enum DaemonReturnType setup_pulseaudio_mainloop(void) {
+  int ret;
+  pa_context *context = NULL;
 
-static void sink_input_event_cb(pa_context *ctx, pa_subscription_event_type_t t,
-                                uint32_t idx, void *data) {
-  (void)t;
-  (void)idx;
-  (void)data;
-  get_sink_input_info_list(ctx);
-}
-
-void context_state_cb(pa_context *ctx, void *data) {
-  (void)data;
-  if (pa_context_get_state(ctx) != PA_CONTEXT_READY) {
-    return;
+  pa_mainloop *mainloop = pa_mainloop_new();
+  if (mainloop == NULL) {
+    LOGE("error setting up pulseaudio mainloop");
+    ret = DAEMON_RETURN_NORETRY;
+    goto out;
   }
 
-  LOGI("get list of sink inputs initially");
-  get_sink_input_info_list(ctx);
+  pa_mainloop_api *mainloop_api = pa_mainloop_get_api(mainloop);
+  if (mainloop_api == NULL) {
+    LOGE("error getting pulseaudio mainloop api");
+    ret = DAEMON_RETURN_NORETRY;
+    goto out;
+  }
 
-  LOGI("subscribing to pulseaudio events");
-  pa_context_set_subscribe_callback(ctx, sink_input_event_cb, NULL);
-  pa_context_subscribe(ctx, PA_SUBSCRIPTION_MASK_SINK_INPUT, NULL, NULL);
+  context = pa_context_new(mainloop_api, "Volume Mixer Daemon");
+  pa_context_set_state_callback(context, NULL, NULL); // TODO: add callback
+  pa_context_connect(context, NULL, PA_CONTEXT_NOFLAGS, NULL);
+  register_libusb_pollfds_with_pa(mainloop_api);
+
+  LOGI("starting pulseaudio mainloop");
+  pa_mainloop_run(mainloop, &ret);
+
+out:
+  pa_context_disconnect(context);
+  pa_context_unref(context);
+  pa_mainloop_free(mainloop);
+  return ret;
 }
