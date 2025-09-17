@@ -1,7 +1,7 @@
 CC = gcc
 
 TARGET = Daemon
-BUILDDIR = build/
+BUILDDIR = build
 
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)

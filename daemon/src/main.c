@@ -53,11 +53,10 @@ out:
   return ret;
 }
 
-static int hotplug_callback(struct libusb_context *ctx,
+static int hotplug_callback(UNUSED struct libusb_context *ctx,
                             struct libusb_device *dev,
-                            libusb_hotplug_event event, void *user_data) {
-  (void)ctx;
-  (void)user_data;
+                            libusb_hotplug_event event,
+                            UNUSED void *user_data) {
   struct libusb_device_descriptor desc;
   struct libusb_device_handle *handle;
   int ret;

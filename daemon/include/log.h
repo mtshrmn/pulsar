@@ -1,6 +1,8 @@
 #ifndef LOG_H
 #define LOG_H
 
+#define UNUSED __attribute__((__unused__))
+
 #include <stdio.h>
 
 #ifdef LOGLEVEL_INFO

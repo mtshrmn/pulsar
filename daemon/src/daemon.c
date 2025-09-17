@@ -3,6 +3,8 @@
 #include "pulseaudio.h"
 #include <libusb-1.0/libusb.h>
 
+unsigned char buf[HID_REPORT_SIZE];
+
 static void transfer_cb(struct libusb_transfer *transfer) {
   if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
     LOGE("transfer error [%d]", transfer->status);
@@ -10,13 +12,17 @@ static void transfer_cb(struct libusb_transfer *transfer) {
   }
 
   // TODO: do something with transfer
+  LOGI("recieved transfer of length [%d]:", transfer->actual_length);
+  for (int i = 0; i < transfer->actual_length; ++i) {
+    printf("%02x ", transfer->buffer[i]);
+  }
+  printf("\n");
   libusb_submit_transfer(transfer);
 }
 
 int daemon_run(libusb_device_handle *handle) {
   int ret;
   struct libusb_transfer *transfer;
-  unsigned char buf[HID_REPORT_SIZE];
 
   LOGI("starting daemon");
 
