@@ -1,3 +1,4 @@
+#include "common/protocol.h"
 #include "daemon.h"
 #include "log.h"
 #include <libusb-1.0/libusb.h>

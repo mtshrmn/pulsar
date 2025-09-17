@@ -8,7 +8,7 @@ OBJ = $(SRC:.c=.o)
 
 CFLAGS = -Wall -Wextra -pedantic
 CFLAGS += -DLOGLEVEL_INFO -D_REENTRANT
-LIBS = -I./include/ -lusb-1.0 -lm -lpulse -pthread
+LIBS = -I./include/ -I.. -lusb-1.0 -lm -lpulse -pthread
 
 all: $(BUILDDIR)/$(TARGET)
 

@@ -19,7 +19,7 @@ SRC += $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
 
 CFLAGS = -std=c99 -Wall -Os -flto -ffunction-sections -fdata-sections
-CFLAGS += -I. -I$(LUFA_PATH_PARENT) -Iinclude/
+CFLAGS += -I. -I.. -I$(LUFA_PATH_PARENT) -Iinclude/
 CFLAGS += -D F_CPU=$(F_CPU) -mmcu=$(MCU) -D F_USB=$(F_USB) -D ARCH=ARCH_$(ARCH)
 
 CFLAGS += -D USB_DEVICE_ONLY

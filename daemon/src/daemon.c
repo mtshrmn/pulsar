@@ -1,9 +1,10 @@
 #include "daemon.h"
+#include "common/protocol.h"
 #include "log.h"
 #include "pulseaudio.h"
 #include <libusb-1.0/libusb.h>
 
-unsigned char buf[HID_REPORT_SIZE];
+unsigned char buf[HID_EPSIZE];
 
 static void transfer_cb(struct libusb_transfer *transfer) {
   if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
@@ -26,13 +27,13 @@ int daemon_run(libusb_device_handle *handle) {
 
   LOGI("starting daemon");
 
-  if (libusb_kernel_driver_active(handle, INTERFACE) == 1) {
+  if (libusb_kernel_driver_active(handle, INTERFACE_ID_HID) == 1) {
     LOGI("detaching kernel driver");
-    libusb_detach_kernel_driver(handle, INTERFACE);
+    libusb_detach_kernel_driver(handle, INTERFACE_ID_HID);
   }
 
   LOGI("attempting to claim interface");
-  ret = libusb_claim_interface(handle, INTERFACE);
+  ret = libusb_claim_interface(handle, INTERFACE_ID_HID);
   if (ret != LIBUSB_SUCCESS) {
     LOGE("libusb failed to claim interface");
     ret = DAEMON_RETURN_NORETRY;
@@ -55,7 +56,7 @@ int daemon_run(libusb_device_handle *handle) {
 
 out:
   LOGI("stopping daemon");
-  libusb_release_interface(handle, INTERFACE);
+  libusb_release_interface(handle, INTERFACE_ID_HID);
   libusb_close(handle);
   return ret;
 }
