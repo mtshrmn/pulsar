@@ -3,25 +3,23 @@
 #include "log.h"
 #include <libusb-1.0/libusb.h>
 #include <stdbool.h>
-#include <unistd.h>
 
-static void daemon_runner_wrapper(libusb_device_handle **handle) {
+libusb_device_handle *device_handle = NULL;
+
+static void daemon_runner_wrapper(void) {
   int ret;
 
-  if (handle == NULL) {
+  if (device_handle == NULL) {
     LOGE("device handle is NULL");
     return;
   }
 
   do {
-    ret = daemon_run(*handle);
+    ret = daemon_run();
   } while (ret == DAEMON_RETURN_RETRY);
-
-  libusb_close(*handle);
 }
 
-static int open_libusb_device(uint16_t vid, uint16_t pid,
-                              libusb_device_handle **handle) {
+static int open_libusb_device(void) {
   int ret;
   libusb_device **devices;
   struct libusb_device_descriptor desc;
@@ -39,14 +37,16 @@ static int open_libusb_device(uint16_t vid, uint16_t pid,
       continue;
     }
 
-    if (desc.idVendor != vid || desc.idProduct != pid) {
+    if (desc.idVendor != VID || desc.idProduct != PID) {
       continue;
     }
 
-    ret = libusb_open(devices[i], handle);
+    ret = libusb_open(devices[i], &device_handle);
     if (ret != LIBUSB_SUCCESS) {
+      LOGE("error opening device - %s", libusb_error_name(ret));
       goto out;
     }
+    LOGI("opened device!");
   }
 
 out:
@@ -59,7 +59,6 @@ static int hotplug_callback(UNUSED struct libusb_context *ctx,
                             libusb_hotplug_event event,
                             UNUSED void *user_data) {
   struct libusb_device_descriptor desc;
-  struct libusb_device_handle *handle;
   int ret;
 
   if (event != LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) {
@@ -76,13 +75,12 @@ static int hotplug_callback(UNUSED struct libusb_context *ctx,
     return 0;
   }
 
-  ret = libusb_open(dev, &handle);
+  ret = libusb_open(dev, &device_handle);
   if (ret != LIBUSB_SUCCESS) {
     LOGE("failed opening usb device - %s", libusb_error_name(ret));
     return 0;
   }
 
-  daemon_runner_wrapper(&handle);
   return 0;
 }
 
@@ -96,10 +94,9 @@ int main(void) {
   }
 
   // try running daemon
-  struct libusb_device_handle *handle;
-  ret = open_libusb_device(VID, PID, &handle);
+  ret = open_libusb_device();
   if (ret == LIBUSB_SUCCESS) {
-    daemon_runner_wrapper(&handle);
+    daemon_runner_wrapper();
   }
 
   if (!libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG)) {
@@ -115,13 +112,17 @@ int main(void) {
 
   while (true) {
     ret = libusb_handle_events_completed(NULL, NULL);
-    if (ret != LIBUSB_SUCCESS) {
-      LOGE("libusb_handle_events() - %s", libusb_error_name(ret));
-      break;
+    if (ret != 0) {
+      LOGE("error handling events - %s", libusb_error_name(ret));
+      continue;
     }
+
+    daemon_runner_wrapper();
   }
 
 out:
+  libusb_release_interface(device_handle, INTERFACE_ID_HID);
+  libusb_close(device_handle);
   libusb_exit(NULL);
   return 0;
 }

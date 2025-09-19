@@ -2,6 +2,7 @@
 #define PULSEAUDIO_H
 
 #include "daemon.h"
+#include <pulse/mainloop.h>
 
-enum DaemonReturnType setup_pulseaudio_mainloop(void);
+enum DaemonReturnType setup_pulseaudio_mainloop(pa_mainloop *mainloop);
 #endif // !PULSEAUDIO_H

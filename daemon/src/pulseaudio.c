@@ -1,8 +1,8 @@
 #include "pulseaudio.h"
 #include "log.h"
 #include "sinkctl.h"
+#include <libusb-1.0/libusb.h>
 #include <poll.h>
-#include <pulse/pulseaudio.h>
 
 static void libusb_io_cb(UNUSED pa_mainloop_api *api, UNUSED pa_io_event *e,
                          UNUSED int fd, UNUSED pa_io_event_flags_t events,
@@ -106,16 +106,9 @@ static void context_state_cb(pa_context *ctx, void *data) {
   pa_context_subscribe(ctx, PA_SUBSCRIPTION_MASK_SINK_INPUT, NULL, NULL);
 }
 
-enum DaemonReturnType setup_pulseaudio_mainloop(void) {
+enum DaemonReturnType setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
   int ret;
   pa_context *context = NULL;
-
-  pa_mainloop *mainloop = pa_mainloop_new();
-  if (mainloop == NULL) {
-    LOGE("error setting up pulseaudio mainloop");
-    ret = DAEMON_RETURN_NORETRY;
-    goto out;
-  }
 
   pa_mainloop_api *mainloop_api = pa_mainloop_get_api(mainloop);
   if (mainloop_api == NULL) {
