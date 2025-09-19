@@ -10,13 +10,14 @@ static void daemon_runner_wrapper(void) {
   int ret;
 
   if (device_handle == NULL) {
-    LOGE("device handle is NULL");
     return;
   }
 
   do {
     ret = daemon_run();
   } while (ret == DAEMON_RETURN_RETRY);
+  libusb_close(device_handle);
+  device_handle = NULL;
 }
 
 static int open_libusb_device(void) {
