@@ -4,5 +4,5 @@
 #include "daemon.h"
 #include <pulse/mainloop.h>
 
-enum DaemonReturnType setup_pulseaudio_mainloop(pa_mainloop *mainloop);
+int setup_pulseaudio_mainloop(pa_mainloop *mainloop);
 #endif // !PULSEAUDIO_H

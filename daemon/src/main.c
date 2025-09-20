@@ -6,20 +6,6 @@
 
 libusb_device_handle *device_handle = NULL;
 
-static void daemon_runner_wrapper(void) {
-  int ret;
-
-  if (device_handle == NULL) {
-    return;
-  }
-
-  do {
-    ret = daemon_run();
-  } while (ret == DAEMON_RETURN_RETRY);
-  libusb_close(device_handle);
-  device_handle = NULL;
-}
-
 static int open_libusb_device(void) {
   int ret;
   libusb_device **devices;
@@ -97,7 +83,9 @@ int main(void) {
   // try running daemon
   ret = open_libusb_device();
   if (ret == LIBUSB_SUCCESS) {
-    daemon_runner_wrapper();
+    daemon_run();
+    libusb_close(device_handle);
+    device_handle = NULL;
   }
 
   if (!libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG)) {
@@ -108,6 +96,10 @@ int main(void) {
   ret = libusb_hotplug_register_callback(
       NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED, 0, VID, PID,
       LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, NULL, NULL);
+  if (ret != LIBUSB_SUCCESS) {
+    LOGE("error registering hotplug");
+    goto out;
+  }
 
   LOGI("hotplug succeful, listening to libusb events");
 
@@ -118,7 +110,13 @@ int main(void) {
       continue;
     }
 
-    daemon_runner_wrapper();
+    if (device_handle == NULL) {
+      continue;
+    }
+
+    daemon_run();
+    libusb_close(device_handle);
+    device_handle = NULL;
   }
 
 out:

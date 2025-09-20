@@ -10,7 +10,7 @@ static void transfer_cb(struct libusb_transfer *transfer) {
   if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
     LOGE("transfer error [%d]", transfer->status);
     libusb_free_transfer(transfer);
-    pa_mainloop_quit(transfer->user_data, DAEMON_RETURN_NORETRY);
+    pa_mainloop_quit(transfer->user_data, 0);
     return;
   }
 
@@ -23,7 +23,7 @@ static void transfer_cb(struct libusb_transfer *transfer) {
   libusb_submit_transfer(transfer);
 }
 
-int daemon_run(void) {
+void daemon_run(void) {
   int ret;
   struct libusb_transfer *transfer;
 
@@ -32,21 +32,22 @@ int daemon_run(void) {
   if (libusb_kernel_driver_active(device_handle, INTERFACE_ID_HID) == 1) {
     LOGI("detaching kernel driver");
     ret = libusb_detach_kernel_driver(device_handle, INTERFACE_ID_HID);
-    LOGI("detached resulted in %d", ret);
+    if (ret != LIBUSB_SUCCESS) {
+      LOGE("detaching kernel driver failed - %s", libusb_error_name(ret));
+      goto out;
+    }
   }
 
   LOGI("attempting to claim interface");
   ret = libusb_claim_interface(device_handle, INTERFACE_ID_HID);
   if (ret != LIBUSB_SUCCESS) {
     LOGE("libusb failed to claim interface");
-    ret = DAEMON_RETURN_NORETRY;
     goto out;
   }
 
   pa_mainloop *mainloop = pa_mainloop_new();
   if (mainloop == NULL) {
     LOGE("error setting up pulseaudio mainloop");
-    ret = DAEMON_RETURN_NORETRY;
     goto out;
   }
 
@@ -59,14 +60,13 @@ int daemon_run(void) {
   if (ret < 0) {
     LOGE("error submitting initial libusb transer [%d]", ret);
     libusb_free_transfer(transfer);
-    ret = DAEMON_RETURN_NORETRY;
     goto out;
   }
 
+  // responsible for freeing mainloop
   ret = setup_pulseaudio_mainloop(mainloop);
 
 out:
   LOGI("stopping daemon");
   libusb_release_interface(device_handle, INTERFACE_ID_HID);
-  return ret;
 }

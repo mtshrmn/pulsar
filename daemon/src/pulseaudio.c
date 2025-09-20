@@ -38,7 +38,7 @@ static void sink_input_new_cb(UNUSED pa_context *ctx,
 
   int ret = sinkctl_insert_sink(info);
   if (ret != 0) {
-    pa_mainloop_quit(data, DAEMON_RETURN_NORETRY);
+    pa_mainloop_quit(data, 0);
   }
 }
 
@@ -51,7 +51,7 @@ static void sink_input_change_cb(UNUSED pa_context *ctx,
 
   int ret = sinkctl_update_sink(info);
   if (ret != 0) {
-    pa_mainloop_quit(data, DAEMON_RETURN_NORETRY);
+    pa_mainloop_quit(data, 0);
   }
 }
 
@@ -82,7 +82,7 @@ static void sink_input_event_cb(pa_context *ctx, pa_subscription_event_type_t t,
   case PA_SUBSCRIPTION_EVENT_REMOVE: {
     int ret = sinkctl_remove_sink(idx);
     if (ret != 0) {
-      pa_mainloop_quit(data, DAEMON_RETURN_NORETRY);
+      pa_mainloop_quit(data, 0);
     }
   } break;
   default:
@@ -106,14 +106,13 @@ static void context_state_cb(pa_context *ctx, void *data) {
   pa_context_subscribe(ctx, PA_SUBSCRIPTION_MASK_SINK_INPUT, NULL, NULL);
 }
 
-enum DaemonReturnType setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
+int setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
   int ret;
   pa_context *context = NULL;
 
   pa_mainloop_api *mainloop_api = pa_mainloop_get_api(mainloop);
   if (mainloop_api == NULL) {
     LOGE("error getting pulseaudio mainloop api");
-    ret = DAEMON_RETURN_NORETRY;
     goto out;
   }
 
