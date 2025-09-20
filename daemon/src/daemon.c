@@ -64,7 +64,7 @@ void daemon_run(void) {
   }
 
   // responsible for freeing mainloop
-  ret = setup_pulseaudio_mainloop(mainloop);
+  setup_pulseaudio_mainloop(mainloop);
 
 out:
   LOGI("stopping daemon");

@@ -106,8 +106,7 @@ static void context_state_cb(pa_context *ctx, void *data) {
   pa_context_subscribe(ctx, PA_SUBSCRIPTION_MASK_SINK_INPUT, NULL, NULL);
 }
 
-int setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
-  int ret;
+void setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
   pa_context *context = NULL;
 
   pa_mainloop_api *mainloop_api = pa_mainloop_get_api(mainloop);
@@ -122,11 +121,10 @@ int setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
   register_libusb_pollfds_with_pa(mainloop_api);
 
   LOGI("starting pulseaudio mainloop");
-  pa_mainloop_run(mainloop, &ret);
+  pa_mainloop_run(mainloop, NULL);
 
 out:
   pa_context_disconnect(context);
   pa_context_unref(context);
   pa_mainloop_free(mainloop);
-  return ret;
 }
