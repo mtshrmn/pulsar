@@ -2,17 +2,17 @@
 #define SINKCTL_H
 
 #include <pulse/pulseaudio.h>
-#include <stdbool.h>
+
+#define INVALID_SINK_INDEX -1
 
 typedef struct {
-  const char *app_name;
-  const char *icon_name;
-  double volume_percent;
-  int idx;
-  bool stale;
+  int index;
+  const char *name;
+  int volume_percent;
 } SinkInfo;
 
-SinkInfo get_sink_info(pa_sink_info *info);
+SinkInfo get_sink_info(const pa_sink_input_info *info);
+void sinkctl_init_displays(void);
 int sinkctl_insert_sink(const pa_sink_input_info *info);
 int sinkctl_update_sink(const pa_sink_input_info *info);
 int sinkctl_remove_sink(int idx);

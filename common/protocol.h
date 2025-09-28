@@ -24,7 +24,10 @@
 #define INTERFACE_ID_HID 0
 #define INTERFACE_ID_BULK 1
 
-typedef struct {
+// TODO: change to 4 when hardware supports it.
+#define NUM_DISPLAYS 1
+
+typedef struct __attribute__((packed, aligned(1))) {
   uint8_t index;
   uint16_t x0;
   uint16_t x1;
@@ -34,10 +37,13 @@ typedef struct {
 } ImageData;
 
 typedef enum {
-  OUT_REPORT_TYPE_VOLUME_INC,
-  OUT_REPORT_TYPE_VOLUME_DEC,
-  OUT_REPORT_TYPE_SET_VOLUME,
-} OUT_REPORT_TYPE;
+  REPORT_TYPE_VOLUME_INC,
+  REPORT_TYPE_VOLUME_DEC,
+  REPORT_TYPE_SET_VOLUME,
+  REPORT_TYPE_CLEAR,
+  REPORT_TYPE_INIT,
+  REPORT_TYPE_ACK,
+} REPORT_TYPE;
 
 // both input and output will work with same reports.
 typedef struct {

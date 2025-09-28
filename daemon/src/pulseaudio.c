@@ -59,10 +59,17 @@ static void sink_input_info_list_cb(UNUSED pa_context *ctx,
                                     const pa_sink_input_info *info, int eol,
                                     void *data) {
   if (eol || info == NULL) {
+    LOGI("done fetching sink input info list");
     return;
   }
-  // TODO:
-  LOGI("sink input info list was called");
+
+  int ret = sinkctl_insert_sink(info);
+  if (ret != 0) {
+    const char *name =
+        pa_proplist_gets(info->proplist, PA_PROP_APPLICATION_NAME);
+    LOGE("error inserting sink %s", name);
+    pa_mainloop_quit(data, 0);
+  }
 }
 
 static void sink_input_event_cb(pa_context *ctx, pa_subscription_event_type_t t,
@@ -119,6 +126,8 @@ void setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
   pa_context_set_state_callback(context, context_state_cb, mainloop);
   pa_context_connect(context, NULL, PA_CONTEXT_NOFLAGS, NULL);
   register_libusb_pollfds_with_pa(mainloop_api);
+
+  sinkctl_init_displays();
 
   LOGI("starting pulseaudio mainloop");
   pa_mainloop_run(mainloop, NULL);

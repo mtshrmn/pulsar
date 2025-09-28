@@ -1,5 +1,6 @@
 #include "daemon.h"
 #include "common/protocol.h"
+#include "hid.h"
 #include "log.h"
 #include "pulseaudio.h"
 #include <libusb-1.0/libusb.h>
@@ -14,12 +15,24 @@ static void transfer_cb(struct libusb_transfer *transfer) {
     return;
   }
 
-  // TODO: do something with transfer
-  LOGI("recieved transfer of length [%d]:", transfer->actual_length);
-  for (int i = 0; i < transfer->actual_length; ++i) {
-    printf("%02x ", transfer->buffer[i]);
+  HIDReport report = *(HIDReport *)transfer->buffer;
+  switch (report.report_type) {
+  case REPORT_TYPE_ACK:
+    hid_report_queue_mark_ready();
+    hid_dequeue_report();
+    break;
+  default: {
+
+    // TODO: do something with transfer
+    LOGI("recieved transfer of length [%d]:", transfer->actual_length);
+    for (int i = 0; i < transfer->actual_length; ++i) {
+      printf("%02x ", transfer->buffer[i]);
+    }
+    printf("\n");
+
+  } break;
   }
-  printf("\n");
+
   libusb_submit_transfer(transfer);
 }
 

@@ -9,5 +9,6 @@ void EVENT_USB_Device_ControlRequest(void);
 
 void Bulk_Task(void);
 void HID_Task(void);
+void HID_ReportACK(void);
 
 #endif // !HID_H

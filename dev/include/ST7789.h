@@ -28,6 +28,7 @@
 // RGB565 colors
 #define WHITE 0xFFFF
 #define RED 0xE062
+#define BLACK 0x0000
 
 typedef struct {
   volatile uint8_t *ddr;

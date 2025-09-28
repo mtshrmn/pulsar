@@ -196,10 +196,10 @@ void ST7789_WriteRaw(ST7789_t *display, uint8_t *data, size_t len) {
 void ST7789_StopWriteRaw(ST7789_t *display) { SETPORT(&display->CS); }
 
 void ST7789_DrawVolumeBar(ST7789_t *display) {
-  __draw_rect(display, RED, 40, 240, 200, 242);
-  __draw_rect(display, RED, 40, 258, 200, 260);
-  __draw_rect(display, RED, 40, 240, 42, 260);
-  __draw_rect(display, RED, 198, 240, 200, 260);
+  __draw_rect(display, WHITE, 40, 240, 200, 242);
+  __draw_rect(display, WHITE, 40, 258, 200, 260);
+  __draw_rect(display, WHITE, 40, 240, 42, 260);
+  __draw_rect(display, WHITE, 198, 240, 200, 260);
 }
 
 void ST7789_UpdateVolumeBar(ST7789_t *display, uint8_t volume,
@@ -210,9 +210,9 @@ void ST7789_UpdateVolumeBar(ST7789_t *display, uint8_t volume,
   uint8_t volume_pos = (uint16_t)volume * 152 / 100 + 44;
   uint8_t prev_volume_pos = (uint16_t)*prev_volume * 152 / 100 + 44;
   if (volume > *prev_volume) {
-    __draw_rect(display, RED, prev_volume_pos, 244, volume_pos, 256);
+    __draw_rect(display, WHITE, prev_volume_pos, 244, volume_pos, 256);
   } else {
-    __draw_rect(display, WHITE, volume_pos, 244, prev_volume_pos, 256);
+    __draw_rect(display, BLACK, volume_pos, 244, prev_volume_pos, 256);
   }
 
   *prev_volume = volume;

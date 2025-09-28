@@ -10,8 +10,6 @@
 #include "HID.h"
 #include "ST7789.h"
 
-uint16_t potentiometerVal = 0;
-
 ST7789_t lcd = {
     .CS = PIN(B, PB6),
     .DC = PIN(B, PB4),
@@ -22,9 +20,7 @@ ST7789_t lcd = {
 bool is_transmitting_image = false;
 uint32_t len = 0;
 ImageData image_data;
-uint16_t color = WHITE;
-uint8_t i = 0;
-uint8_t volume = 0;
+HIDReport hid_report;
 uint8_t prev_volume = 0;
 
 void Bulk_ProcessData(uint8_t *buf, size_t size) {
@@ -52,26 +48,25 @@ void Bulk_ProcessData(uint8_t *buf, size_t size) {
 }
 
 void HID_ProcessReport(uint8_t *report, size_t size) {
-  if (report[0] != 0) {
-    return;
+  hid_report = *(HIDReport *)report;
+  // assert hid_report.index == 0
+  switch (hid_report.report_type) {
+  case REPORT_TYPE_SET_VOLUME:
+    ST7789_UpdateVolumeBar(&lcd, hid_report.volume, &prev_volume);
+    HID_ReportACK();
+    break;
+  case REPORT_TYPE_INIT:
+    ST7789_DrawVolumeBar(&lcd);
+    ST7789_UpdateVolumeBar(&lcd, 0, &prev_volume);
+    HID_ReportACK();
+    break;
+  case REPORT_TYPE_CLEAR:
+    ST7789_ClearScreen(&lcd, BLACK);
+    HID_ReportACK();
+    break;
+  default:
+    break;
   }
-
-  if (report[1] == 1) {
-    ST7789_ClearScreen(&lcd, WHITE);
-    return;
-  }
-
-  if (report[2]) {
-    if (volume > 0) {
-      volume--;
-    }
-  } else {
-    if (volume < 100) {
-      volume++;
-    }
-  }
-
-  ST7789_UpdateVolumeBar(&lcd, volume, &prev_volume);
 }
 
 void HID_CreateReport(uint8_t *buf, size_t size) {
@@ -80,79 +75,25 @@ void HID_CreateReport(uint8_t *buf, size_t size) {
   buf[2] = (PIND & (1 << PD7)) == 0; // data = UP/DOWN
 }
 
-void setup_external_interrupt(void) {
-  // set PD1 to input pullup.
-  DDRD &= ~(1 << PD1);
-  PORTD |= (1 << PD1);
-
-  DDRD &= ~(1 << PD7);
-  PORTD |= (1 << PD7);
-
-  // interrupt on falling edge
-  EICRA |= ~(1 << ISC11);
-  EICRA |= ~(1 << ISC10);
-  // enable interrupt in mask
-  EIMSK |= (1 << INT1);
-}
-
-ISR(INT1_vect) {
-  // HID IN
-  Endpoint_SelectEndpoint(HID_IN_EPADDR);
-  if (Endpoint_IsINReady()) {
-    uint8_t in_buf[HID_EPSIZE] = {0};
-    HID_CreateReport(in_buf, HID_EPSIZE);
-    Endpoint_Write_Stream_LE(in_buf, HID_EPSIZE, NULL);
-    Endpoint_ClearIN();
-  }
-}
-
 int __attribute__((noreturn)) main(void) {
   wdt_disable();
   clock_prescale_set(clock_div_1);
   USB_Init();
   GlobalInterruptEnable();
-  setup_external_interrupt();
   adc_init();
   ST7789_Init(&lcd);
-  ST7789_ClearScreen(&lcd, WHITE);
+  ST7789_ClearScreen(&lcd, BLACK);
 
   for (;;) {
-    // potentiometerVal = adc_read(PF7);
-    // ST7789_FilledCircle(&lcd, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 60,
-    //                     potentiometerVal);
+    // Endpoint_SelectEndpoint(HID_IN_EPADDR);
+    // if (Endpoint_IsINReady()) {
+    //   uint8_t in_buf[HID_EPSIZE] = {0};
+    //   HID_CreateReport(in_buf, HID_EPSIZE);
+    //   Endpoint_Write_Stream_LE(in_buf, HID_EPSIZE, NULL);
+    //   Endpoint_ClearIN();
+    // }
     USB_USBTask();
     HID_Task();
     Bulk_Task();
-  }
-}
-
-// WARNING: =================================================================
-
-// ISR(INT1_vect) {
-//   // ST7789_FilledCircle(&lcd, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 60,
-//   RED); if (PIND & (1 << PD7)) {
-//     // ccw
-//     if (volume > 0) {
-//       volume--;
-//     }
-//   } else {
-//     // cw
-//     if (volume < 100) {
-//       volume++;
-//     }
-//   }
-//   ST7789_UpdateVolumeBar(&lcd, volume, &prev_volume);
-// }
-
-int __attribute__((noreturn)) notmain(void) {
-  clock_prescale_set(clock_div_1);
-  GlobalInterruptEnable();
-  setup_external_interrupt();
-  ST7789_Init(&lcd);
-  ST7789_ClearScreen(&lcd, WHITE);
-  ST7789_DrawVolumeBar(&lcd);
-
-  for (;;) {
-    // do nothing.
   }
 }

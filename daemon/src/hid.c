@@ -9,6 +9,14 @@
 #define HIGH(x) ((uint8_t)((x) >> 8))
 #define LOW(x) ((uint8_t)((x)))
 
+extern libusb_device_handle *device_handle;
+
+static HIDQueue report_queue = {
+    .read_head = 0,
+    .write_head = 0,
+    .is_ready_to_dequeue = true,
+};
+
 static void interrupt_transfer_complete_cb(struct libusb_transfer *transfer) {
   if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
     LOGE("HID transfer error :%d", transfer->status);
@@ -24,7 +32,6 @@ static void interrupt_transfer_complete_cb(struct libusb_transfer *transfer) {
 out:
   libusb_free_transfer(transfer);
 }
-extern libusb_device_handle *device_handle;
 
 int hid_write(uint8_t *report, size_t size) {
   struct libusb_transfer *transfer;
@@ -57,6 +64,39 @@ static RGB565 rgb888_to_rgb565(RGB888 *color) {
   return rgb565;
 }
 
+int hid_enqueue_report(uint8_t *report, size_t size) {
+  if (size > HID_EPSIZE) {
+    LOGE("report size (%zu) too big", size);
+    return 1;
+  }
+
+  memcpy(report_queue.ring_buffer[report_queue.write_head], report, size);
+  report_queue.write_head = (report_queue.write_head + 1) % RING_BUFFER_SIZE;
+
+  // attempt dequeuing this report
+  return hid_dequeue_report();
+}
+
+int hid_dequeue_report(void) {
+  if (!report_queue.is_ready_to_dequeue) {
+    LOGI("can't submit report, buffering instead");
+    return 0;
+  }
+
+  if (report_queue.read_head == report_queue.write_head) {
+    return 0;
+  }
+
+  uint8_t *report = report_queue.ring_buffer[report_queue.read_head];
+  report_queue.read_head = (report_queue.read_head + 1) % RING_BUFFER_SIZE;
+  report_queue.is_ready_to_dequeue = false;
+  return hid_write(report, HID_EPSIZE);
+}
+
+void hid_report_queue_mark_ready(void) {
+  report_queue.is_ready_to_dequeue = true;
+}
+
 int bulk_send_image(uint8_t index, const char *image_path, uint16_t x,
                     uint8_t y) {
 
@@ -68,6 +108,11 @@ int bulk_send_image(uint8_t index, const char *image_path, uint16_t x,
   int channels;
 
   uint8_t *data = stbi_load(image_path, &width, &height, &channels, 3);
+  if (data == NULL) {
+    LOGE("error loading image '%s', reason - %s", image_path,
+         stbi_failure_reason());
+    return 0;
+  }
   LOGI("loaded image %s (w*h=%d*%d, c=%d)", image_path, width, height,
        channels);
 
