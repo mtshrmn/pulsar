@@ -53,20 +53,18 @@ void HID_ProcessReport(uint8_t *report, size_t size) {
   switch (hid_report.report_type) {
   case REPORT_TYPE_SET_VOLUME:
     ST7789_UpdateVolumeBar(&lcd, hid_report.volume, &prev_volume);
-    HID_ReportACK();
     break;
   case REPORT_TYPE_INIT:
     ST7789_DrawVolumeBar(&lcd);
     ST7789_UpdateVolumeBar(&lcd, 0, &prev_volume);
-    HID_ReportACK();
     break;
   case REPORT_TYPE_CLEAR:
     ST7789_ClearScreen(&lcd, BLACK);
-    HID_ReportACK();
     break;
   default:
     break;
   }
+  HID_ReportACK();
 }
 
 void HID_CreateReport(uint8_t *buf, size_t size) {
@@ -93,7 +91,10 @@ int __attribute__((noreturn)) main(void) {
     //   Endpoint_ClearIN();
     // }
     USB_USBTask();
-    HID_Task();
+    // don't poll for hid reports if image is being drawn
+    if (is_transmitting_image == false) {
+      HID_Task();
+    }
     Bulk_Task();
   }
 }

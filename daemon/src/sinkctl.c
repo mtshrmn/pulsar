@@ -2,6 +2,7 @@
 #include "common/protocol.h"
 #include "hid.h"
 #include "log.h"
+#include <libusb-1.0/libusb.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -19,6 +20,7 @@ static char *get_image_path_from_sink_info(const pa_sink_input_info *info) {
 }
 
 void sinkctl_init_displays(void) {
+  LOGI("clearing displays");
   for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
     displays[i].index = INVALID_SINK_INDEX;
     HIDReport report = {
@@ -27,6 +29,8 @@ void sinkctl_init_displays(void) {
     };
 
     hid_enqueue_report((uint8_t *)&report, sizeof(report));
+    // this report must complete before continuing.
+    libusb_handle_events_completed(NULL, NULL);
   }
 }
 
