@@ -2,7 +2,9 @@
 #include "common/protocol.h"
 #include "hid.h"
 #include "log.h"
+#include "pulseaudio.h"
 #include <libusb-1.0/libusb.h>
+#include <math.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -126,4 +128,55 @@ SinkInfo get_sink_info(const pa_sink_input_info *info) {
       .name = name,
       .volume_percent = volume_percent,
   };
+}
+
+static void sink_input_info_cb(pa_context *context,
+                               const pa_sink_input_info *info, int eol,
+                               void *userdata) {
+  if (eol > 0 || info == NULL)
+    return;
+
+  // userdata is a value, not a pointer.
+  int percent = (int64_t)userdata;
+  pa_cvolume new_volume = info->volume;
+  if (percent >= 0) {
+    pa_volume_t increase = PA_VOLUME_NORM * percent / 100;
+    pa_cvolume_inc_clamp(&new_volume, increase, PA_VOLUME_NORM);
+  } else {
+    pa_volume_t decrease = PA_VOLUME_NORM * (-percent) / 100;
+    pa_cvolume_dec(&new_volume, decrease);
+  }
+
+  pa_operation *op = pa_context_set_sink_input_volume(context, info->index,
+                                                      &new_volume, NULL, NULL);
+  if (op)
+    pa_operation_unref(op);
+}
+
+static int sinkctl_volume_change(int sink_index, int64_t percent) {
+  pa_context *context = pulseaudio_get_pa_context();
+  if (context == NULL || pa_context_get_state(context) != PA_CONTEXT_READY) {
+    LOGE("pa context not ready");
+    return 1;
+  }
+
+  // pass the userdata as a regular value.
+  // do not treat userdata as pointer!
+  pa_operation *op = pa_context_get_sink_input_info(
+      context, sink_index, sink_input_info_cb, (void *)percent);
+  if (op) {
+    pa_operation_unref(op);
+  }
+
+  return 0;
+}
+
+int sinkctl_volume_inc(int index) {
+  int sink_index = displays[index].index;
+  return sinkctl_volume_change(sink_index, 5);
+}
+
+int sinkctl_volume_dec(int index) {
+  int sink_index = displays[index].index;
+  return sinkctl_volume_change(sink_index, -5);
 }

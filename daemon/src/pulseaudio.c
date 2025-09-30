@@ -4,6 +4,8 @@
 #include <libusb-1.0/libusb.h>
 #include <poll.h>
 
+static pa_context *context;
+
 static void libusb_io_cb(UNUSED pa_mainloop_api *api, UNUSED pa_io_event *e,
                          UNUSED int fd, UNUSED pa_io_event_flags_t events,
                          UNUSED void *userdata) {
@@ -114,7 +116,6 @@ static void context_state_cb(pa_context *ctx, void *data) {
 }
 
 void setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
-  pa_context *context = NULL;
 
   pa_mainloop_api *mainloop_api = pa_mainloop_get_api(mainloop);
   if (mainloop_api == NULL) {
@@ -136,4 +137,9 @@ out:
   pa_context_disconnect(context);
   pa_context_unref(context);
   pa_mainloop_free(mainloop);
+}
+
+pa_context *pulseaudio_get_pa_context(void) {
+  // NOTE: is this the correct way?
+  return context;
 }

@@ -3,6 +3,7 @@
 #include "hid.h"
 #include "log.h"
 #include "pulseaudio.h"
+#include "sinkctl.h"
 #include <libusb-1.0/libusb.h>
 
 extern libusb_device_handle *device_handle;
@@ -20,6 +21,12 @@ static void transfer_cb(struct libusb_transfer *transfer) {
   case REPORT_TYPE_ACK:
     hid_report_queue_mark_ready();
     hid_dequeue_report();
+    break;
+  case REPORT_TYPE_VOLUME_INC:
+    sinkctl_volume_inc(report.index);
+    break;
+  case REPORT_TYPE_VOLUME_DEC:
+    sinkctl_volume_dec(report.index);
     break;
   default: {
 
