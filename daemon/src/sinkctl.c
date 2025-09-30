@@ -173,10 +173,16 @@ static int sinkctl_volume_change(int sink_index, int64_t percent) {
 
 int sinkctl_volume_inc(int index) {
   int sink_index = displays[index].index;
+  if (sink_index == INVALID_SINK_INDEX) {
+    return 0;
+  }
   return sinkctl_volume_change(sink_index, 5);
 }
 
 int sinkctl_volume_dec(int index) {
   int sink_index = displays[index].index;
+  if (sink_index == INVALID_SINK_INDEX) {
+    return 0;
+  }
   return sinkctl_volume_change(sink_index, -5);
 }
