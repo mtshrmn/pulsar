@@ -28,16 +28,9 @@ static void transfer_cb(struct libusb_transfer *transfer) {
   case REPORT_TYPE_VOLUME_DEC:
     sinkctl_volume_dec(report.index);
     break;
-  default: {
-
-    // TODO: do something with transfer
-    LOGI("recieved transfer of length [%d]:", transfer->actual_length);
-    for (int i = 0; i < transfer->actual_length; ++i) {
-      printf("%02x ", transfer->buffer[i]);
-    }
-    printf("\n");
-
-  } break;
+  default:
+    LOGE("recieved unkown type of report %d", report.report_type);
+    break;
   }
 
   libusb_submit_transfer(transfer);
