@@ -9,6 +9,115 @@
 #include <unistd.h>
 
 static SinkInfo displays[NUM_DISPLAYS];
+static SinkQueue sink_queue;
+
+static int sinkctl_insert_sink_in_queue(SinkInfo sink_info) {
+  SinkQueueNode *node = malloc(sizeof(SinkQueueNode));
+  if (node == NULL) {
+    LOGE("error allocating memory for sink queue node");
+    return 1;
+  }
+
+  SinkQueueNode *tail = sink_queue.tail;
+  node->sink_info = sink_info;
+  node->next = NULL;
+  node->prev = tail;
+  sink_queue.tail = node;
+
+  if (tail == NULL) {
+    sink_queue.head = node;
+    return 0;
+  }
+
+  tail->next = node;
+  return 0;
+}
+
+static SinkInfo sinkctl_pop_sink_in_queue(void) {
+  SinkQueueNode *head = sink_queue.head;
+  if (head == NULL) {
+    LOGE("sink queue is empty, returning invalid sink info");
+    return (SinkInfo){
+        .index = INVALID_SINK_INDEX,
+    };
+  }
+
+  SinkInfo sink_info;
+  SinkQueueNode *new_head = head->next;
+  sink_queue.head = new_head;
+  sink_info = head->sink_info;
+  free(head);
+
+  if (new_head == NULL) {
+    sink_queue.tail = NULL;
+    return sink_info;
+  }
+
+  new_head->prev = NULL;
+  return sink_info;
+}
+
+static SinkQueueNode *sinkctl_get_sink_in_queue_by_sink_index(int index) {
+  SinkQueueNode *node = sink_queue.head;
+  for (; node != NULL; node = node->next) {
+    if (node->sink_info.index == index) {
+      return node;
+    }
+  }
+  return NULL;
+}
+
+static int sinkctl_remove_sink_in_queue_by_sink_index(int index) {
+  SinkQueueNode *node = sinkctl_get_sink_in_queue_by_sink_index(index);
+  if (node == NULL) {
+    LOGE("unable to find sink with index %d", index);
+    return 1;
+  }
+
+  SinkQueueNode *prev = node->prev;
+  SinkQueueNode *next = node->next;
+  free(node);
+
+  if (prev == NULL) {
+    sink_queue.head = next;
+  } else {
+    prev->next = next;
+  }
+
+  if (next == NULL) {
+    sink_queue.tail = prev;
+  } else {
+    next->prev = prev;
+  }
+
+  return 0;
+}
+
+static void sink_input_info_insert_sink_cb(UNUSED pa_context *context,
+                                           const pa_sink_input_info *info,
+                                           int eol, UNUSED void *userdata) {
+  if (eol > 0 || info == NULL) {
+    return;
+  }
+
+  sinkctl_insert_sink(info);
+}
+
+static int sinkctl_insert_sink_by_index(int index) {
+  pa_context *context = pulseaudio_get_pa_context();
+  if (context == NULL || pa_context_get_state(context) != PA_CONTEXT_READY) {
+    LOGE("pa context not ready");
+    return 1;
+  }
+
+  pa_operation *op = pa_context_get_sink_input_info(
+      context, index, sink_input_info_insert_sink_cb, NULL);
+  if (op) {
+    pa_operation_unref(op);
+  }
+
+  return 0;
+}
 
 static char *get_image_path_from_sink_info(const pa_sink_input_info *info) {
   const char *xdg_config = getenv("XDG_CONFIG_HOME");
@@ -77,7 +186,9 @@ int sinkctl_insert_sink(const pa_sink_input_info *info) {
     return hid_enqueue_report((uint8_t *)&report, sizeof(report));
   }
 
-  return 0;
+  // if code reaches here, it means that all displays have a sink already
+  // insert sink into sink queue instead
+  return sinkctl_insert_sink_in_queue(sink_info);
 }
 
 int sinkctl_update_sink(const pa_sink_input_info *info) {
@@ -98,6 +209,15 @@ int sinkctl_update_sink(const pa_sink_input_info *info) {
     return hid_enqueue_report((uint8_t *)&report, sizeof(report));
   }
 
+  // must update the corresponding sink in queue
+  int index = sink_info.index;
+  SinkQueueNode *node = sinkctl_get_sink_in_queue_by_sink_index(index);
+  if (node == NULL) {
+    LOGE("cant find sink with index %d in queue", sink_info.index);
+    return 1;
+  }
+
+  node->sink_info = sink_info;
   return 0;
 }
 
@@ -113,10 +233,21 @@ int sinkctl_remove_sink(int index) {
         .report_type = REPORT_TYPE_CLEAR,
     };
 
-    return hid_enqueue_report((uint8_t *)&report, sizeof(report));
+    int ret = hid_enqueue_report((uint8_t *)&report, sizeof(report));
+    if (ret != 0) {
+      LOGE("error enqueuing report");
+      return ret;
+    }
+
+    SinkInfo sink_info = sinkctl_pop_sink_in_queue();
+    if (sink_info.index == INVALID_SINK_INDEX) {
+      return 0;
+    }
+
+    return sinkctl_insert_sink_by_index(sink_info.index);
   }
 
-  return 0;
+  return sinkctl_remove_sink_in_queue_by_sink_index(index);
 }
 
 SinkInfo get_sink_info(const pa_sink_input_info *info) {

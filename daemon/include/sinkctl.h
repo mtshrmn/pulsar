@@ -11,6 +11,19 @@ typedef struct {
   int volume_percent;
 } SinkInfo;
 
+typedef struct SinkQueueNode SinkQueueNode;
+
+struct SinkQueueNode {
+  SinkInfo sink_info;
+  SinkQueueNode *prev;
+  SinkQueueNode *next;
+};
+
+typedef struct {
+  SinkQueueNode *head;
+  SinkQueueNode *tail;
+} SinkQueue;
+
 SinkInfo get_sink_info(const pa_sink_input_info *info);
 void sinkctl_init_displays(void);
 int sinkctl_insert_sink(const pa_sink_input_info *info);
