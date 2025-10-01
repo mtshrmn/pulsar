@@ -92,7 +92,7 @@ static int sinkctl_remove_sink_in_queue_by_sink_index(int index) {
   SinkQueueNode *node = sinkctl_get_sink_in_queue_by_sink_index(index);
   if (node == NULL) {
     LOGE("unable to find sink with index %d", index);
-    return 1;
+    return 0;
   }
 
   SinkQueueNode *prev = node->prev;
