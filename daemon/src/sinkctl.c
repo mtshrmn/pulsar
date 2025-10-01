@@ -8,6 +8,27 @@
 #include <string.h>
 #include <unistd.h>
 
+#define INVALID_SINK_INDEX -1
+
+typedef struct {
+  int index;
+  const char *name;
+  int volume_percent;
+} SinkInfo;
+
+typedef struct SinkQueueNode SinkQueueNode;
+
+struct SinkQueueNode {
+  SinkInfo sink_info;
+  SinkQueueNode *prev;
+  SinkQueueNode *next;
+};
+
+typedef struct {
+  SinkQueueNode *head;
+  SinkQueueNode *tail;
+} SinkQueue;
+
 static SinkInfo displays[NUM_DISPLAYS];
 static SinkQueue sink_queue;
 
@@ -117,6 +138,17 @@ static int sinkctl_insert_sink_by_index(int index) {
   }
 
   return 0;
+}
+
+static SinkInfo get_sink_info(const pa_sink_input_info *info) {
+  const char *name = pa_proplist_gets(info->proplist, PA_PROP_APPLICATION_NAME);
+  pa_volume_t volume = pa_cvolume_avg(&info->volume);
+  int volume_percent = (volume * 100) / PA_VOLUME_NORM;
+  return (SinkInfo){
+      .index = info->index,
+      .name = name,
+      .volume_percent = volume_percent,
+  };
 }
 
 static char *get_image_path_from_sink_info(const pa_sink_input_info *info) {
@@ -248,17 +280,6 @@ int sinkctl_remove_sink(int index) {
   }
 
   return sinkctl_remove_sink_in_queue_by_sink_index(index);
-}
-
-SinkInfo get_sink_info(const pa_sink_input_info *info) {
-  const char *name = pa_proplist_gets(info->proplist, PA_PROP_APPLICATION_NAME);
-  pa_volume_t volume = pa_cvolume_avg(&info->volume);
-  int volume_percent = (volume * 100) / PA_VOLUME_NORM;
-  return (SinkInfo){
-      .index = info->index,
-      .name = name,
-      .volume_percent = volume_percent,
-  };
 }
 
 static void sink_input_info_cb(pa_context *context,
