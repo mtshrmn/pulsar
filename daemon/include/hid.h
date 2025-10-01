@@ -27,6 +27,7 @@ typedef struct {
 } HIDQueue;
 
 int hid_enqueue_report(uint8_t *report, size_t size);
+int hid_enqueue_report_and_wait(uint8_t *report, size_t size);
 int hid_dequeue_report(void);
 void hid_report_queue_mark_ready(void);
 int bulk_send_image(uint8_t index, const char *image_path, uint16_t x,

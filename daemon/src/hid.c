@@ -77,6 +77,20 @@ int hid_enqueue_report(uint8_t *report, size_t size) {
   return hid_dequeue_report();
 }
 
+int hid_enqueue_report_and_wait(uint8_t *report, size_t size) {
+  int ret = hid_enqueue_report(report, size);
+  if (ret != 0) {
+    return ret;
+  }
+
+  // wait until report queue is empty
+  do {
+    libusb_handle_events_completed(NULL, NULL);
+  } while (report_queue.read_head != report_queue.write_head);
+
+  return 0;
+}
+
 int hid_dequeue_report(void) {
   if (!report_queue.is_ready_to_dequeue) {
     LOGI("can't submit report, buffering instead");

@@ -171,9 +171,7 @@ void sinkctl_init_displays(void) {
         .report_type = REPORT_TYPE_CLEAR,
     };
 
-    hid_enqueue_report((uint8_t *)&report, sizeof(report));
-    // this report must complete before continuing.
-    libusb_handle_events_completed(NULL, NULL);
+    hid_enqueue_report_and_wait((uint8_t *)&report, sizeof(report));
   }
 }
 
@@ -265,7 +263,7 @@ int sinkctl_remove_sink(int index) {
         .report_type = REPORT_TYPE_CLEAR,
     };
 
-    int ret = hid_enqueue_report((uint8_t *)&report, sizeof(report));
+    int ret = hid_enqueue_report_and_wait((uint8_t *)&report, sizeof(report));
     if (ret != 0) {
       LOGE("error enqueuing report");
       return ret;
