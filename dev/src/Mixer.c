@@ -5,7 +5,6 @@
 
 #include <LUFA/Drivers/USB/USB.h>
 
-#include "ADC.h"
 #include "Descriptors.h"
 #include "HID.h"
 #include "ST7789.h"
@@ -118,7 +117,6 @@ int __attribute__((noreturn)) main(void) {
   clock_prescale_set(clock_div_1);
   USB_Init();
   GlobalInterruptEnable();
-  adc_init();
   encoder_init();
   ST7789_Init(&lcd);
   ST7789_ClearScreen(&lcd, BLACK);
