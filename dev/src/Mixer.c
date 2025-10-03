@@ -13,11 +13,8 @@
 // 2500 ticks = 10ms
 #define DEBOUNCE_TICKS 2500
 
-ST7789_t lcd = {
-    .CS = PIN(B, PB6),
-    .DC = PIN(B, PB4),
-    .RST = PIN(B, PB5),
-    .BLK = PIN(C, PC7),
+ST7789_t displays[NUM_DISPLAYS] = {
+    {.CS = PIN(B, PB6)},
 };
 
 bool is_transmitting_image = false;
@@ -75,7 +72,7 @@ void Bulk_ProcessData(uint8_t *buf, size_t size) {
     image_data = *(ImageData *)buf;
     // for now, assert image_data.index == 0
     // clang-format off
-    ST7789_StartWriteRaw(&lcd, image_data.x0, image_data.y0,
+    ST7789_StartWriteRaw(&displays[image_data.index], image_data.x0, image_data.y0,
                          image_data.x1, image_data.y1);
     // clang-format on
 
@@ -83,28 +80,29 @@ void Bulk_ProcessData(uint8_t *buf, size_t size) {
   }
 
   len += size;
-  ST7789_WriteRaw(&lcd, buf, size);
+  ST7789_WriteRaw(&displays[image_data.index], buf, size);
 
   if (len >= image_data.data_len) {
     is_transmitting_image = false;
-    ST7789_StopWriteRaw(&lcd);
+    ST7789_StopWriteRaw(&displays[image_data.index]);
     return;
   }
 }
 
 void HID_ProcessReport(uint8_t *report, size_t size) {
   hid_report = *(HIDReport *)report;
+  ST7789_t *display = &displays[hid_report.index];
   // assert hid_report.index == 0
   switch (hid_report.report_type) {
   case REPORT_TYPE_SET_VOLUME:
-    ST7789_UpdateVolumeBar(&lcd, hid_report.volume, &prev_volume);
+    ST7789_UpdateVolumeBar(display, hid_report.volume, &prev_volume);
     break;
   case REPORT_TYPE_INIT:
-    ST7789_DrawVolumeBar(&lcd);
-    ST7789_UpdateVolumeBar(&lcd, 0, &prev_volume);
+    ST7789_DrawVolumeBar(displays);
+    ST7789_UpdateVolumeBar(displays, 0, &prev_volume);
     break;
   case REPORT_TYPE_CLEAR:
-    ST7789_ClearScreen(&lcd, BLACK);
+    ST7789_ClearScreen(displays, BLACK);
     break;
   default:
     break;
@@ -118,8 +116,10 @@ int __attribute__((noreturn)) main(void) {
   USB_Init();
   GlobalInterruptEnable();
   encoder_init();
-  ST7789_Init(&lcd);
-  ST7789_ClearScreen(&lcd, BLACK);
+  for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
+    ST7789_Init(&displays[i]);
+    ST7789_ClearScreen(&displays[i], BLACK);
+  }
 
   for (;;) {
     USB_USBTask();

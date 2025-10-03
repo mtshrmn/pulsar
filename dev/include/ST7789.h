@@ -30,6 +30,9 @@
 #define RED 0xE062
 #define BLACK 0x0000
 
+#define DC PIN(B, PB4)
+#define RST PIN(B, PB5)
+
 typedef struct {
   volatile uint8_t *ddr;
   volatile uint8_t *port;
@@ -38,9 +41,6 @@ typedef struct {
 
 typedef struct {
   __Pin_t CS;
-  __Pin_t BLK;
-  __Pin_t DC;
-  __Pin_t RST;
 } ST7789_t;
 
 void ST7789_Init(ST7789_t *display);

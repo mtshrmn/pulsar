@@ -12,31 +12,31 @@ static inline void CLRPORT(__Pin_t *p) { __CLRBIT(*p->port, p->pin); }
 
 static inline void SEND_CMD(ST7789_t *display, uint8_t cmd) {
   CLRPORT(&display->CS);
-  CLRPORT(&display->DC);
+  CLRPORT(&DC);
   SPI_Transfer(cmd);
   SETPORT(&display->CS);
 }
 
 static inline void SEND_DATA(ST7789_t *display, uint8_t data) {
   CLRPORT(&display->CS);
-  SETPORT(&display->DC);
+  SETPORT(&DC);
   SPI_Transfer(data);
   SETPORT(&display->CS);
 }
 
 static inline void __configure_ddr(ST7789_t *display) {
   // set display pins as outputs
-  SETDDR(&display->RST);
+  SETDDR(&RST);
   SETDDR(&display->CS);
-  SETDDR(&display->BLK);
-  SETDDR(&display->DC);
+  // SETDDR(&display->BLK);
+  SETDDR(&DC);
 }
 
 static inline void __configure_port(ST7789_t *display) {
   // set display pins as HIGH
-  SETPORT(&display->RST);
+  SETPORT(&RST);
   SETPORT(&display->CS);
-  SETPORT(&display->BLK);
+  // SETPORT(&display->BLK);
 }
 
 static inline void __init_sequence(ST7789_t *display) {
@@ -61,11 +61,11 @@ static inline void __madctl(ST7789_t *display) {
   CLRPORT(&display->CS);
 
   // set memory address access control
-  CLRPORT(&display->DC);
+  CLRPORT(&DC);
   SPI_Transfer(MADCTL);
 
   // set display mode to RGB565
-  SETPORT(&display->DC);
+  SETPORT(&DC);
   SPI_Transfer(0x00);
 
   SETPORT(&display->CS);
@@ -73,27 +73,27 @@ static inline void __madctl(ST7789_t *display) {
 
 static inline void __reset_hw(ST7789_t *display) {
   // the reset sequence
-  CLRPORT(&display->RST);
+  CLRPORT(&RST);
   _delay_us(15);
-  SETPORT(&display->RST);
+  SETPORT(&RST);
   _delay_ms(120);
 }
 
 static inline void __set_window(ST7789_t *display, uint16_t x0, uint16_t y0,
                                 uint16_t x1, uint16_t y1) {
-  CLRPORT(&display->DC);
+  CLRPORT(&DC);
   SPI_Transfer(CASET);
 
-  SETPORT(&display->DC);
+  SETPORT(&DC);
   SPI_Transfer(HIGH(x0));
   SPI_Transfer(LOW(x0));
   SPI_Transfer(HIGH(x1));
   SPI_Transfer(LOW(x1));
 
-  CLRPORT(&display->DC);
+  CLRPORT(&DC);
   SPI_Transfer(RASET);
 
-  SETPORT(&display->DC);
+  SETPORT(&DC);
   SPI_Transfer(HIGH(y0));
   SPI_Transfer(LOW(y0));
   SPI_Transfer(HIGH(y1));
@@ -103,9 +103,9 @@ static inline void __set_window(ST7789_t *display, uint16_t x0, uint16_t y0,
 static inline void __set_color_small(ST7789_t *display, uint16_t color,
                                      uint8_t count) {
 
-  CLRPORT(&display->DC);
+  CLRPORT(&DC);
   SPI_Transfer(RAMWR);
-  SETPORT(&display->DC);
+  SETPORT(&DC);
   while (count--) {
     SPI_Transfer(HIGH(color));
     SPI_Transfer(LOW(color));
@@ -113,9 +113,9 @@ static inline void __set_color_small(ST7789_t *display, uint16_t color,
 }
 
 static inline void __set_color(ST7789_t *display, uint16_t color) {
-  CLRPORT(&display->DC);
+  CLRPORT(&DC);
   SPI_Transfer(RAMWR);
-  SETPORT(&display->DC);
+  SETPORT(&DC);
   // since uint8_t cant hold (SCREEN_WIDTH * SCREEN_HEIGHT)
   // using a simple for-loop will be a slowdown
   // instead, an ugly hack is being used
@@ -158,9 +158,9 @@ void __draw_rect(ST7789_t *display, uint16_t color, uint16_t x0, uint16_t y0,
   if (count <= UINT8_MAX) {
     __set_color_small(display, color, count);
   } else {
-    CLRPORT(&display->DC);
+    CLRPORT(&DC);
     SPI_Transfer(RAMWR);
-    SETPORT(&display->DC);
+    SETPORT(&DC);
     while (count--) {
       SPI_Transfer(HIGH(color));
       SPI_Transfer(LOW(color));
@@ -182,9 +182,9 @@ void ST7789_StartWriteRaw(ST7789_t *display, uint16_t x0, uint16_t y0,
   CLRPORT(&display->CS);
   __set_window(display, x0, y0, x1, y1);
   // start of __set_color
-  CLRPORT(&display->DC);
+  CLRPORT(&DC);
   SPI_Transfer(RAMWR);
-  SETPORT(&display->DC);
+  SETPORT(&DC);
 }
 
 void ST7789_WriteRaw(ST7789_t *display, uint8_t *data, size_t len) {
