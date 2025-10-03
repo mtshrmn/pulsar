@@ -49,7 +49,7 @@ ISR(INT1_vect) {
   uint16_t elapsed = now - last_interrupt;
 
   if (elapsed < DEBOUNCE_TICKS) {
-    return;
+    goto out;
   }
   last_interrupt = now;
 
@@ -62,6 +62,8 @@ ISR(INT1_vect) {
     Endpoint_Write_Stream_LE((uint8_t *)&report, sizeof(report), NULL);
     Endpoint_ClearIN();
   }
+
+out:
   sei();
 }
 
