@@ -35,79 +35,116 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor = {
     .ProductStrIndex = STRING_ID_Product,
     .SerialNumStrIndex = NO_DESCRIPTOR,
 
-    .NumberOfConfigurations = 1};
+    .NumberOfConfigurations = 1,
+};
 
 const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
-    .Config = {.Header = {.Size = sizeof(USB_Descriptor_Configuration_Header_t),
-                          .Type = DTYPE_Configuration},
-               .TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
-               .TotalInterfaces = 2,
+    .Config =
+        {
+            .Header =
+                {
+                    .Size = sizeof(USB_Descriptor_Configuration_Header_t),
+                    .Type = DTYPE_Configuration,
+                },
+            .TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
+            .TotalInterfaces = 2,
 
-               .ConfigurationNumber = 1,
-               .ConfigurationStrIndex = NO_DESCRIPTOR,
+            .ConfigurationNumber = 1,
+            .ConfigurationStrIndex = NO_DESCRIPTOR,
 
-               .ConfigAttributes =
-                   (USB_CONFIG_ATTR_RESERVED | USB_CONFIG_ATTR_SELFPOWERED),
-               .MaxPowerConsumption = USB_CONFIG_POWER_MA(100)},
+            .ConfigAttributes =
+                (USB_CONFIG_ATTR_RESERVED | USB_CONFIG_ATTR_SELFPOWERED),
+            .MaxPowerConsumption = USB_CONFIG_POWER_MA(100),
+        },
 
-    // HID Interface
-    .HID_Interface = {.Header = {.Size = sizeof(USB_Descriptor_Interface_t),
-                                 .Type = DTYPE_Interface},
-                      .InterfaceNumber = INTERFACE_ID_HID,
-                      .AlternateSetting = 0,
+    .HID_Interface =
+        {
+            .Header =
+                {
+                    .Size = sizeof(USB_Descriptor_Interface_t),
+                    .Type = DTYPE_Interface,
+                },
+            .InterfaceNumber = INTERFACE_ID_HID,
+            .AlternateSetting = 0,
 
-                      .TotalEndpoints = 2,
-                      .Class = HID_CSCP_HIDClass,
-                      .SubClass = HID_CSCP_NonBootSubclass,
-                      .Protocol = HID_CSCP_NonBootProtocol,
-                      .InterfaceStrIndex = NO_DESCRIPTOR},
+            .TotalEndpoints = 2,
+            .Class = HID_CSCP_HIDClass,
+            .SubClass = HID_CSCP_NonBootSubclass,
+            .Protocol = HID_CSCP_NonBootProtocol,
+            .InterfaceStrIndex = NO_DESCRIPTOR,
+        },
 
-    .HID_HIDDescriptor = {.Header = {.Size = sizeof(USB_HID_Descriptor_HID_t),
-                                     .Type = HID_DTYPE_HID},
-                          .HIDSpec = VERSION_BCD(1, 1, 1),
-                          .CountryCode = 0,
-                          .TotalReportDescriptors = 1,
-                          .HIDReportType = HID_DTYPE_Report,
-                          .HIDReportLength = sizeof(HIDReportDescriptor)},
+    .HID_HIDDescriptor =
+        {
+            .Header =
+                {
+                    .Size = sizeof(USB_HID_Descriptor_HID_t),
+                    .Type = HID_DTYPE_HID,
+                },
+            .HIDSpec = VERSION_BCD(1, 1, 1),
+            .CountryCode = 0,
+            .TotalReportDescriptors = 1,
+            .HIDReportType = HID_DTYPE_Report,
+            .HIDReportLength = sizeof(HIDReportDescriptor),
+        },
 
-    .HID_ReportINEndpoint = {.Header = {.Size =
-                                            sizeof(USB_Descriptor_Endpoint_t),
-                                        .Type = DTYPE_Endpoint},
-                             .EndpointAddress = HID_IN_EPADDR,
-                             .Attributes =
-                                 (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC |
-                                  ENDPOINT_USAGE_DATA),
-                             .EndpointSize = HID_EPSIZE,
-                             .PollingIntervalMS = 0x05},
+    .HID_ReportINEndpoint =
+        {
+            .Header =
+                {
+                    .Size = sizeof(USB_Descriptor_Endpoint_t),
+                    .Type = DTYPE_Endpoint,
+                },
+            .EndpointAddress = HID_IN_EPADDR,
+            .Attributes =
+                EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA,
+            .EndpointSize = HID_EPSIZE,
+            .PollingIntervalMS = 0x05,
+        },
 
-    .HID_ReportOUTEndpoint = {.Header = {.Size =
-                                             sizeof(USB_Descriptor_Endpoint_t),
-                                         .Type = DTYPE_Endpoint},
-                              .EndpointAddress = HID_OUT_EPADDR,
-                              .Attributes =
-                                  (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC |
-                                   ENDPOINT_USAGE_DATA),
-                              .EndpointSize = HID_EPSIZE,
-                              .PollingIntervalMS = 0x05},
+    .HID_ReportOUTEndpoint =
+        {
+            .Header =
+                {
+                    .Size = sizeof(USB_Descriptor_Endpoint_t),
+                    .Type = DTYPE_Endpoint,
+                },
+            .EndpointAddress = HID_OUT_EPADDR,
+            .Attributes =
+                EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA,
+            .EndpointSize = HID_EPSIZE,
+            .PollingIntervalMS = 0x05,
+        },
 
-    // Bulk OUT Interface
-    .Bulk_Interface = {.Header = {.Size = sizeof(USB_Descriptor_Interface_t),
-                                  .Type = DTYPE_Interface},
-                       .InterfaceNumber = INTERFACE_ID_BULK,
-                       .AlternateSetting = 0,
-                       .TotalEndpoints = 1,
-                       .Class = 0xFF, // Vendor Specific
-                       .SubClass = 0,
-                       .Protocol = 0,
-                       .InterfaceStrIndex = NO_DESCRIPTOR},
+    .Bulk_Interface =
+        {
+            .Header =
+                {
+                    .Size = sizeof(USB_Descriptor_Interface_t),
+                    .Type = DTYPE_Interface,
+                },
+            .InterfaceNumber = INTERFACE_ID_BULK,
+            .AlternateSetting = 0,
+            .TotalEndpoints = 1,
+            .Class = 0xFF, // Vendor Specific
+            .SubClass = 0,
+            .Protocol = 0,
+            .InterfaceStrIndex = NO_DESCRIPTOR,
+        },
 
-    .Bulk_OUTEndpoint = {.Header = {.Size = sizeof(USB_Descriptor_Endpoint_t),
-                                    .Type = DTYPE_Endpoint},
-                         .EndpointAddress = BULK_OUT_EPADDR,
-                         .Attributes = (EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC |
-                                        ENDPOINT_USAGE_DATA),
-                         .EndpointSize = BULK_EPSIZE,
-                         .PollingIntervalMS = 0},
+    .Bulk_OUTEndpoint =
+        {
+            .Header =
+                {
+                    .Size = sizeof(USB_Descriptor_Endpoint_t),
+                    .Type = DTYPE_Endpoint,
+                },
+            .EndpointAddress = BULK_OUT_EPADDR,
+            .Attributes =
+                EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA,
+            .EndpointSize = BULK_EPSIZE,
+            .PollingIntervalMS = 0,
+        },
 };
 
 const USB_Descriptor_String_t PROGMEM LanguageString =

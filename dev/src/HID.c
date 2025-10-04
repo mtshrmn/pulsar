@@ -13,7 +13,6 @@ void EVENT_USB_Device_ConfigurationChanged(void) {
 
 void Bulk_Task(void) {
   Endpoint_SelectEndpoint(BULK_OUT_EPADDR);
-
   if (Endpoint_IsOUTReceived()) {
     uint8_t buffer[BULK_EPSIZE];
     uint16_t bytesReceived = Endpoint_BytesInEndpoint();
