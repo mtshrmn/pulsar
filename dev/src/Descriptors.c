@@ -154,7 +154,7 @@ const USB_Descriptor_String_t PROGMEM ManufacturerString =
     USB_STRING_DESCRIPTOR(L"My Manufacturer");
 
 const USB_Descriptor_String_t PROGMEM ProductString =
-    USB_STRING_DESCRIPTOR(L"Volume Mixer");
+    USB_STRING_DESCRIPTOR(L"Pulsar - Pulseaudio Mixer");
 
 uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                                     const uint16_t wIndex,

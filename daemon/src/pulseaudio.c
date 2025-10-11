@@ -123,7 +123,7 @@ void setup_pulseaudio_mainloop(pa_mainloop *mainloop) {
     goto out;
   }
 
-  context = pa_context_new(mainloop_api, "Volume Mixer Daemon");
+  context = pa_context_new(mainloop_api, "Pulsar Daemon");
   pa_context_set_state_callback(context, context_state_cb, mainloop);
   pa_context_connect(context, NULL, PA_CONTEXT_NOFLAGS, NULL);
   register_libusb_pollfds_with_pa(mainloop_api);

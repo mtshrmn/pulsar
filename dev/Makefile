@@ -3,7 +3,7 @@ F_CPU = 16000000UL
 F_USB = $(F_CPU)
 ARCH = AVR8
 
-TARGET = Mixer
+TARGET = pulsar
 
 CC = avr-gcc
 OBJCOPY = avr-objcopy

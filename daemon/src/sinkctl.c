@@ -154,7 +154,7 @@ static SinkInfo get_sink_info(const pa_sink_input_info *info) {
 static char *get_image_path_from_sink_info(const pa_sink_input_info *info) {
   const char *xdg_config = getenv("XDG_CONFIG_HOME");
   const char *name = pa_proplist_gets(info->proplist, PA_PROP_APPLICATION_NAME);
-  const char *subdir = "/mixer/";
+  const char *subdir = "/pulsar/";
   const char *ext = ".png";
   size_t len = strlen(xdg_config) + strlen(subdir) + strlen(name) + strlen(ext);
   char *image_path = malloc(len + 1); // plus one for null termination
