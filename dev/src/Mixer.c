@@ -9,10 +9,6 @@
 #include "HID.h"
 #include "ST7789.h"
 
-// given a prescaler of 64, 1 tick = 4us.
-// 2500 ticks = 10ms
-#define DEBOUNCE_TICKS 2500
-
 ST7789_t displays[NUM_DISPLAYS] = {
     {.CS = PIN(B, PB6)},
 };
@@ -22,7 +18,6 @@ uint32_t len = 0;
 ImageData image_data;
 HIDReport hid_report;
 uint8_t prev_volume = 0;
-static volatile uint16_t last_interrupt = 0;
 
 static inline void encoder_init(void) {
   DDRD &= ~(1 << PD1);
@@ -35,8 +30,6 @@ static inline void encoder_init(void) {
   EICRA |= ~(1 << ISC10);
   EIMSK |= (1 << INT1);
 
-  // set timer1 prescaler to 64
-  TCCR1B = (1 << CS11) | (1 << CS10);
   sei();
 }
 
@@ -44,14 +37,6 @@ ISR(INT1_vect) {
   cli();
   uint8_t clk = (PIND & (1 << PD1)) ? 1 : 0;
   uint8_t dt = (PIND & (1 << PD7)) ? 1 : 0;
-
-  uint16_t now = TCNT1;
-  uint16_t elapsed = now - last_interrupt;
-
-  if (elapsed < DEBOUNCE_TICKS) {
-    goto out;
-  }
-  last_interrupt = now;
 
   Endpoint_SelectEndpoint(HID_IN_EPADDR);
   if (Endpoint_IsINReady()) {
@@ -63,7 +48,6 @@ ISR(INT1_vect) {
     Endpoint_ClearIN();
   }
 
-out:
   sei();
 }
 
