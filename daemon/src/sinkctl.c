@@ -57,7 +57,7 @@ static int sinkctl_insert_sink_in_queue(SinkInfo sink_info) {
 static SinkInfo sinkctl_pop_sink_in_queue(void) {
   SinkQueueNode *head = sink_queue.head;
   if (head == NULL) {
-    LOGE("sink queue is empty, returning invalid sink info");
+    LOGI("sink queue is empty, returning invalid sink info");
     return (SinkInfo){
         .index = INVALID_SINK_INDEX,
     };
@@ -269,6 +269,7 @@ int sinkctl_remove_sink(int index) {
       return ret;
     }
 
+    LOGI("attemting to insert sink from queue");
     SinkInfo sink_info = sinkctl_pop_sink_in_queue();
     if (sink_info.index == INVALID_SINK_INDEX) {
       return 0;

@@ -25,7 +25,7 @@
 #define INTERFACE_ID_BULK 1
 
 // TODO: change to 4 when hardware supports it.
-#define NUM_DISPLAYS 1
+#define NUM_DISPLAYS 4
 
 typedef struct __attribute__((packed, aligned(1))) {
   uint8_t index;

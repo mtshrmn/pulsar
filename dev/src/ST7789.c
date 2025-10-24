@@ -71,7 +71,7 @@ static inline void __madctl(ST7789_t *display) {
   SETPORT(&display->CS);
 }
 
-static inline void __reset_hw(ST7789_t *display) {
+static inline void __reset_hw(void) {
   // the reset sequence
   CLRPORT(&RST);
   _delay_us(15);
@@ -138,15 +138,20 @@ static inline void __set_color(ST7789_t *display, uint16_t color) {
   }
 }
 
-void ST7789_Init(ST7789_t *display) {
+void ST7789_Init(ST7789_t displays[NUM_DISPLAYS]) {
   SPI_Init();
-  __configure_ddr(display);
-  __configure_port(display);
+  for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
+    __configure_ddr(&displays[i]);
+    __configure_port(&displays[i]);
+  }
   _delay_ms(10);
 
-  __reset_hw(display);
-  __init_sequence(display);
-  __madctl(display);
+  __reset_hw();
+
+  for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
+    __init_sequence(&displays[i]);
+    __madctl(&displays[i]);
+  }
 }
 
 void __draw_rect(ST7789_t *display, uint16_t color, uint16_t x0, uint16_t y0,

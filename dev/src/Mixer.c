@@ -10,14 +10,17 @@
 #include "ST7789.h"
 
 ST7789_t displays[NUM_DISPLAYS] = {
-    {.CS = PIN(B, PB6)},
+    {.CS = PIN(F, PF5)},
+    {.CS = PIN(F, PF4)},
+    {.CS = PIN(F, PF1)},
+    {.CS = PIN(F, PF0)},
 };
 
 bool is_transmitting_image = false;
 uint32_t len = 0;
 ImageData image_data;
 HIDReport hid_report;
-uint8_t prev_volume = 0;
+uint8_t prev_volumes[NUM_DISPLAYS] = {0};
 
 static inline void encoder_init(void) {
   DDRD &= ~(1 << PD1);
@@ -78,17 +81,18 @@ void Bulk_ProcessData(uint8_t *buf, size_t size) {
 void HID_ProcessReport(uint8_t *report, size_t size) {
   hid_report = *(HIDReport *)report;
   ST7789_t *display = &displays[hid_report.index];
+  uint8_t *prev_volume = prev_volumes + hid_report.index;
   // assert hid_report.index == 0
   switch (hid_report.report_type) {
   case REPORT_TYPE_SET_VOLUME:
-    ST7789_UpdateVolumeBar(display, hid_report.volume, &prev_volume);
+    ST7789_UpdateVolumeBar(display, hid_report.volume, prev_volume);
     break;
   case REPORT_TYPE_INIT:
-    ST7789_DrawVolumeBar(displays);
-    ST7789_UpdateVolumeBar(displays, 0, &prev_volume);
+    ST7789_DrawVolumeBar(display);
+    ST7789_UpdateVolumeBar(display, 0, prev_volume);
     break;
   case REPORT_TYPE_CLEAR:
-    ST7789_ClearScreen(displays, BLACK);
+    ST7789_ClearScreen(display, BLACK);
     break;
   default:
     break;
@@ -102,8 +106,8 @@ int __attribute__((noreturn)) main(void) {
   USB_Init();
   GlobalInterruptEnable();
   encoder_init();
+  ST7789_Init(displays);
   for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
-    ST7789_Init(&displays[i]);
     ST7789_ClearScreen(&displays[i], BLACK);
   }
 
