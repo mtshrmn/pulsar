@@ -11,7 +11,7 @@ void SPI_Init(void) {
   SPSR |= (1 << SPI2X);
 }
 
-inline void SPI_Transfer(uint8_t data) {
+void SPI_Transfer(uint8_t data) {
   SPDR = data;
   // wait 4*2 cycles
   __asm__ volatile("rjmp .+0\n"
