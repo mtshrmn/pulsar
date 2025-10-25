@@ -107,9 +107,10 @@ int __attribute__((noreturn)) main(void) {
   GlobalInterruptEnable();
   encoder_init();
   ST7789_Init(displays);
-  for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
-    ST7789_ClearScreen(&displays[i], BLACK);
-  }
+  ST7789_ClearScreens(displays, BLACK);
+  // for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
+  //   ST7789_ClearScreen(&displays[i], WHITE);
+  // }
 
   for (;;) {
     USB_USBTask();
