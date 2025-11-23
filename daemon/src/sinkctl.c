@@ -186,9 +186,8 @@ int sinkctl_insert_sink(const pa_sink_input_info *info) {
     displays[i] = sink_info;
     LOGI("displays[%zu] = {.index = %d, ...}", i, displays[i].index);
 
-    // TODO: change 0, 0 to center of screen inside bulk_send_image.
     char *image_path = get_image_path_from_sink_info(info);
-    int ret = bulk_send_image(i, image_path, 20, 20);
+    int ret = bulk_send_image(i, image_path, 56, 56);
     if (ret != 0) {
       LOGE("error sending image '%s'", image_path);
       free(image_path);

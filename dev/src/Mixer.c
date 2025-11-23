@@ -10,10 +10,10 @@
 #include "ST7789.h"
 
 ST7789_t displays[NUM_DISPLAYS] = {
-    {.CS = PIN(F, PF5)},
-    {.CS = PIN(F, PF4)},
-    {.CS = PIN(F, PF1)},
     {.CS = PIN(F, PF0)},
+    {.CS = PIN(F, PF1)},
+    {.CS = PIN(F, PF4)},
+    {.CS = PIN(F, PF5)},
 };
 
 bool is_transmitting_image = false;
@@ -23,29 +23,43 @@ HIDReport hid_report;
 uint8_t prev_volumes[NUM_DISPLAYS] = {0};
 
 static inline void encoder_init(void) {
+  DDRD &= ~(1 << PD0);
   DDRD &= ~(1 << PD1);
-  DDRD &= ~(1 << PD7);
+  DDRD &= ~(1 << PD2);
+  DDRD &= ~(2 << PD3);
+  DDRD &= ~(1 << PD6);
 
+  PORTD &= ~(1 << PD0);
   PORTD &= ~(1 << PD1);
+  PORTD &= ~(1 << PD2);
+  PORTD &= ~(1 << PD3);
   PORTD &= ~(1 << PD7);
 
+  EICRA |= ~(1 << ISC01);
+  EICRA |= ~(1 << ISC00);
   EICRA |= ~(1 << ISC11);
   EICRA |= ~(1 << ISC10);
+  EICRA |= ~(1 << ISC21);
+  EICRA |= ~(1 << ISC20);
+  EICRA |= ~(1 << ISC31);
+  EICRA |= ~(1 << ISC30);
+  EIMSK |= (1 << INT0);
   EIMSK |= (1 << INT1);
+  EIMSK |= (1 << INT2);
+  EIMSK |= (1 << INT3);
 
   sei();
 }
 
-ISR(INT1_vect) {
+void handle_interrupt(uint8_t index) {
+  uint8_t dt = (PIND & (1 << PD6));
   cli();
-  uint8_t clk = (PIND & (1 << PD1)) ? 1 : 0;
-  uint8_t dt = (PIND & (1 << PD7)) ? 1 : 0;
 
   Endpoint_SelectEndpoint(HID_IN_EPADDR);
   if (Endpoint_IsINReady()) {
     HIDReport report = {
-        .report_type =
-            clk != dt ? REPORT_TYPE_VOLUME_INC : REPORT_TYPE_VOLUME_DEC,
+        .index = index,
+        .report_type = dt ? REPORT_TYPE_VOLUME_DEC : REPORT_TYPE_VOLUME_INC,
     };
     Endpoint_Write_Stream_LE((uint8_t *)&report, sizeof(report), NULL);
     Endpoint_ClearIN();
@@ -53,6 +67,11 @@ ISR(INT1_vect) {
 
   sei();
 }
+
+ISR(INT0_vect) { handle_interrupt(0); }
+ISR(INT1_vect) { handle_interrupt(1); }
+ISR(INT2_vect) { handle_interrupt(2); }
+ISR(INT3_vect) { handle_interrupt(3); }
 
 void Bulk_ProcessData(uint8_t *buf, size_t size) {
   if (is_transmitting_image == false) {
