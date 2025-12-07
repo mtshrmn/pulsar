@@ -27,7 +27,7 @@ static inline void encoder_init(void) {
   DDRD &= ~(1 << PD1);
   DDRD &= ~(1 << PD2);
   DDRD &= ~(2 << PD3);
-  DDRD &= ~(1 << PD6);
+  DDRD &= ~(1 << PD7);
 
   PORTD &= ~(1 << PD0);
   PORTD &= ~(1 << PD1);
@@ -35,14 +35,14 @@ static inline void encoder_init(void) {
   PORTD &= ~(1 << PD3);
   PORTD &= ~(1 << PD7);
 
-  EICRA |= ~(1 << ISC01);
-  EICRA |= ~(1 << ISC00);
-  EICRA |= ~(1 << ISC11);
-  EICRA |= ~(1 << ISC10);
-  EICRA |= ~(1 << ISC21);
-  EICRA |= ~(1 << ISC20);
-  EICRA |= ~(1 << ISC31);
-  EICRA |= ~(1 << ISC30);
+  EICRA |= (1 << ISC01);
+  EICRA &= ~(1 << ISC00);
+  EICRA |= (1 << ISC11);
+  EICRA &= ~(1 << ISC10);
+  EICRA |= (1 << ISC21);
+  EICRA &= ~(1 << ISC20);
+  EICRA |= (1 << ISC31);
+  EICRA &= ~(1 << ISC30);
   EIMSK |= (1 << INT0);
   EIMSK |= (1 << INT1);
   EIMSK |= (1 << INT2);
@@ -52,14 +52,14 @@ static inline void encoder_init(void) {
 }
 
 void handle_interrupt(uint8_t index) {
-  uint8_t dt = (PIND & (1 << PD6));
+  uint8_t dt = (PIND & (1 << PD7));
   cli();
 
   Endpoint_SelectEndpoint(HID_IN_EPADDR);
   if (Endpoint_IsINReady()) {
     HIDReport report = {
         .index = index,
-        .report_type = dt ? REPORT_TYPE_VOLUME_DEC : REPORT_TYPE_VOLUME_INC,
+        .report_type = dt ? REPORT_TYPE_VOLUME_INC : REPORT_TYPE_VOLUME_DEC,
     };
     Endpoint_Write_Stream_LE((uint8_t *)&report, sizeof(report), NULL);
     Endpoint_ClearIN();
