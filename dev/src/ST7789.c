@@ -8,26 +8,32 @@
 
 #define FOR_DISPLAY(iter) for (size_t iter = 0; iter < NUM_DISPLAYS; ++iter)
 
-static inline void SETDDR(const __Pin_t *const p) { SETBIT(*p->ddr, p->pin); }
-static inline void SETPORT(const __Pin_t *const p) { SETBIT(*p->port, p->pin); }
-static inline void CLRPORT(const __Pin_t *const p) { CLRBIT(*p->port, p->pin); }
+static inline void SETDDR(const ST7789_t *const p) { SETBIT(*p->ddr, p->pin); }
 
-static const __Pin_t DC = PIN(F, PF6);
-static const __Pin_t RST = PIN(F, PF7);
+static inline void SETPORT(const ST7789_t *const p) {
+  SETBIT(*p->port, p->pin);
+}
+
+static inline void CLRPORT(const ST7789_t *const p) {
+  CLRBIT(*p->port, p->pin);
+}
+
+static const ST7789_t DC = PIN(F, PF6);
+static const ST7789_t RST = PIN(F, PF7);
 
 static inline void configure_ddrs(ST7789_t displays[NUM_DISPLAYS]) {
   SETDDR(&RST);
-  FOR_DISPLAY(i) { SETDDR(&displays[i].CS); }
+  FOR_DISPLAY(i) { SETDDR(&displays[i]); }
   SETDDR(&DC);
 }
 
 static inline void configure_ports(ST7789_t displays[NUM_DISPLAYS]) {
   SETPORT(&RST);
-  FOR_DISPLAY(i) { SETPORT(&displays[i].CS); }
+  FOR_DISPLAY(i) { SETPORT(&displays[i]); }
 }
 
 static inline void init_sequence(ST7789_t displays[NUM_DISPLAYS]) {
-  FOR_DISPLAY(i) { CLRPORT(&displays[i].CS); }
+  FOR_DISPLAY(i) { CLRPORT(&displays[i]); }
 
   CLRPORT(&DC);
   SPI_Transfer(SWRESET);
@@ -47,17 +53,17 @@ static inline void init_sequence(ST7789_t displays[NUM_DISPLAYS]) {
   SPI_Transfer(DISPON);
   _delay_ms(200);
 
-  FOR_DISPLAY(i) { SETPORT(&displays[i].CS); }
+  FOR_DISPLAY(i) { SETPORT(&displays[i]); }
 }
 
 static inline void madctl(ST7789_t displays[NUM_DISPLAYS]) {
-  FOR_DISPLAY(i) { CLRPORT(&displays[i].CS); }
+  FOR_DISPLAY(i) { CLRPORT(&displays[i]); }
   CLRPORT(&DC);
   SPI_Transfer(MADCTL);
   // set display mode to RGB565
   SETPORT(&DC);
   SPI_Transfer(0x00);
-  FOR_DISPLAY(i) { SETPORT(&displays[i].CS); }
+  FOR_DISPLAY(i) { SETPORT(&displays[i]); }
 }
 
 static inline void reset_hw(void) {
@@ -126,22 +132,22 @@ static inline void set_fullscreen_color(uint16_t color) {
 }
 
 void ST7789_ClearScreen(ST7789_t *display, uint16_t color) {
-  CLRPORT(&display->CS);
+  CLRPORT(display);
   set_window(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   set_fullscreen_color(color);
-  SETPORT(&display->CS);
+  SETPORT(display);
 }
 
 void ST7789_ClearScreens(ST7789_t displays[NUM_DISPLAYS], uint16_t color) {
-  FOR_DISPLAY(i) { CLRPORT(&displays[i].CS); }
+  FOR_DISPLAY(i) { CLRPORT(&displays[i]); }
   set_window(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   set_fullscreen_color(color);
-  FOR_DISPLAY(i) { SETPORT(&displays[i].CS); }
+  FOR_DISPLAY(i) { SETPORT(&displays[i]); }
 }
 
 void ST7789_StartWriteRaw(ST7789_t *display, uint16_t x0, uint16_t y0,
                           uint16_t x1, uint16_t y1) {
-  CLRPORT(&display->CS);
+  CLRPORT(display);
   set_window(x0, y0, x1, y1);
   // start of __set_color
   CLRPORT(&DC);
@@ -156,7 +162,7 @@ void ST7789_WriteRaw(ST7789_t *display, uint8_t *data, size_t len) {
   }
 }
 
-void ST7789_StopWriteRaw(ST7789_t *display) { SETPORT(&display->CS); }
+void ST7789_StopWriteRaw(ST7789_t *display) { SETPORT(display); }
 
 static inline void set_color(uint16_t color, uint16_t count) {
   CLRPORT(&DC);
@@ -176,12 +182,12 @@ static inline void draw_rect(uint16_t color, uint16_t x0, uint16_t y0,
 }
 
 void ST7789_DrawVolumeBar(ST7789_t *display) {
-  CLRPORT(&display->CS);
+  CLRPORT(display);
   draw_rect(WHITE, 40, 240, 200, 242);
   draw_rect(WHITE, 40, 258, 200, 260);
   draw_rect(WHITE, 40, 240, 42, 260);
   draw_rect(WHITE, 198, 240, 200, 260);
-  SETPORT(&display->CS);
+  SETPORT(display);
 }
 
 static void update_volume_regular(ST7789_t *display, uint8_t volume,
@@ -191,13 +197,13 @@ static void update_volume_regular(ST7789_t *display, uint8_t volume,
   }
   uint8_t volume_pos = (uint16_t)volume * 152 / 100 + 44;
   uint8_t prev_volume_pos = (uint16_t)*prev_volume * 152 / 100 + 44;
-  CLRPORT(&display->CS);
+  CLRPORT(display);
   if (volume > *prev_volume) {
     draw_rect(WHITE, prev_volume_pos, 244, volume_pos, 256);
   } else {
     draw_rect(BLACK, volume_pos, 244, prev_volume_pos, 256);
   }
-  SETPORT(&display->CS);
+  SETPORT(display);
 
   *prev_volume = volume;
 }
@@ -211,13 +217,13 @@ static void update_volume_loud(ST7789_t *display, uint8_t volume,
   // nasty linear equation
   uint8_t volume_pos = ((uint16_t)volume * 152 - 13000) / 50;
   uint8_t prev_volume_pos = ((uint16_t)*prev_volume * 152 - 13000) / 50;
-  CLRPORT(&display->CS);
+  CLRPORT(display);
   if (volume > *prev_volume) {
     draw_rect(RED, prev_volume_pos, 244, volume_pos, 256);
   } else {
     draw_rect(WHITE, volume_pos, 244, prev_volume_pos, 256);
   }
-  SETPORT(&display->CS);
+  SETPORT(display);
 
   *prev_volume = volume;
 }

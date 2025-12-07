@@ -6,7 +6,7 @@
 #include <stddef.h>
 
 #define PIN(letter, number)                                                    \
-  (__Pin_t) { .ddr = &DDR##letter, .port = &PORT##letter, .pin = number }
+  (ST7789_t) { .ddr = &DDR##letter, .port = &PORT##letter, .pin = number }
 
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 320UL
@@ -36,10 +36,6 @@ typedef struct {
   volatile uint8_t *ddr;
   volatile uint8_t *port;
   uint8_t pin;
-} __Pin_t;
-
-typedef struct {
-  __Pin_t CS;
 } ST7789_t;
 
 void ST7789_Init(ST7789_t displays[NUM_DISPLAYS]);

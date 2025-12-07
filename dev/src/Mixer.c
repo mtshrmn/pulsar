@@ -9,11 +9,14 @@
 #include "HID.h"
 #include "ST7789.h"
 
+#define SET_ISR(id)                                                            \
+  ISR(INT##id##_vect) { handle_interrupt(id); }
+
 ST7789_t displays[NUM_DISPLAYS] = {
-    {.CS = PIN(F, PF0)},
-    {.CS = PIN(F, PF1)},
-    {.CS = PIN(F, PF4)},
-    {.CS = PIN(F, PF5)},
+    PIN(F, PF0),
+    PIN(F, PF1),
+    PIN(F, PF4),
+    PIN(F, PF5),
 };
 
 bool is_transmitting_image = false;
@@ -23,30 +26,16 @@ HIDReport hid_report;
 uint8_t prev_volumes[NUM_DISPLAYS] = {0};
 
 static inline void encoder_init(void) {
-  DDRD &= ~(1 << PD0);
-  DDRD &= ~(1 << PD1);
-  DDRD &= ~(1 << PD2);
-  DDRD &= ~(2 << PD3);
-  DDRD &= ~(1 << PD7);
+  // set PD0, PD1, PD2, PD3, PD7 to input.
+  DDRD &= ~_BV(PD0) & ~_BV(PD1) & ~_BV(PD2) & ~_BV(PD3) & ~_BV(PD7);
+  // do not use internal pullup resistor on those ports
+  PORTD &= ~_BV(PD0) & ~_BV(PD1) & ~_BV(PD2) & ~_BV(PD3) & ~_BV(PD7);
 
-  PORTD &= ~(1 << PD0);
-  PORTD &= ~(1 << PD1);
-  PORTD &= ~(1 << PD2);
-  PORTD &= ~(1 << PD3);
-  PORTD &= ~(1 << PD7);
-
-  EICRA |= (1 << ISC01);
-  EICRA &= ~(1 << ISC00);
-  EICRA |= (1 << ISC11);
-  EICRA &= ~(1 << ISC10);
-  EICRA |= (1 << ISC21);
-  EICRA &= ~(1 << ISC20);
-  EICRA |= (1 << ISC31);
-  EICRA &= ~(1 << ISC30);
-  EIMSK |= (1 << INT0);
-  EIMSK |= (1 << INT1);
-  EIMSK |= (1 << INT2);
-  EIMSK |= (1 << INT3);
+  // EICRA has 4 set of INT pins.
+  // each set should be set to 0b10 for falling edge detection.
+  EICRA = 0b10101010;
+  // set EIMSK lower half to high to enable corresponding ISRs (INT0-INT4).
+  EIMSK |= 0b1111;
 
   sei();
 }
@@ -68,10 +57,10 @@ void handle_interrupt(uint8_t index) {
   sei();
 }
 
-ISR(INT0_vect) { handle_interrupt(0); }
-ISR(INT1_vect) { handle_interrupt(1); }
-ISR(INT2_vect) { handle_interrupt(2); }
-ISR(INT3_vect) { handle_interrupt(3); }
+SET_ISR(0)
+SET_ISR(1)
+SET_ISR(2)
+SET_ISR(3)
 
 void Bulk_ProcessData(uint8_t *buf, size_t size) {
   if (is_transmitting_image == false) {
