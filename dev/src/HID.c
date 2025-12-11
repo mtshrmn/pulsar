@@ -29,7 +29,7 @@ void HID_Task(void) {
   Endpoint_SelectEndpoint(HID_OUT_EPADDR);
   if (Endpoint_IsOUTReceived()) {
     uint8_t out_buf[HID_EPSIZE];
-    Endpoint_Read_Stream_LE(out_buf, HID_EPSIZE, NULL);
+    Endpoint_Read_Stream_LE(out_buf, sizeof(HIDReport), NULL);
     HID_ProcessReport(out_buf, HID_EPSIZE);
     Endpoint_ClearOUT();
   }

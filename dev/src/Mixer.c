@@ -88,8 +88,16 @@ void Bulk_ProcessData(uint8_t *buf, size_t size) {
 
 void HID_ProcessReport(uint8_t *report, size_t size) {
   hid_report = *(HIDReport *)report;
+  uint8_t expected_parity =
+      hid_report.index ^ hid_report.report_type ^ hid_report.volume;
+
+  if (hid_report.parity != expected_parity) {
+    HID_ReportACK();
+    return;
+  }
+
   ST7789_t *display = &displays[hid_report.index];
-  uint8_t *prev_volume = prev_volumes + hid_report.index;
+  uint8_t *prev_volume = &prev_volumes[hid_report.index];
   // assert hid_report.index == 0
   switch (hid_report.report_type) {
   case REPORT_TYPE_SET_VOLUME:
@@ -105,6 +113,7 @@ void HID_ProcessReport(uint8_t *report, size_t size) {
   default:
     break;
   }
+
   HID_ReportACK();
 }
 

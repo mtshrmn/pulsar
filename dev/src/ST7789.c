@@ -196,7 +196,7 @@ static void update_volume_regular(ST7789_t *display, uint8_t volume,
     return;
   }
   uint8_t volume_pos = (uint16_t)volume * 152 / 100 + 44;
-  uint8_t prev_volume_pos = (uint16_t)*prev_volume * 152 / 100 + 44;
+  uint8_t prev_volume_pos = (uint16_t)(*prev_volume) * 152 / 100 + 44;
   CLRPORT(display);
   if (volume > *prev_volume) {
     draw_rect(WHITE, prev_volume_pos, 244, volume_pos, 256);
@@ -208,44 +208,8 @@ static void update_volume_regular(ST7789_t *display, uint8_t volume,
   *prev_volume = volume;
 }
 
-static void update_volume_loud(ST7789_t *display, uint8_t volume,
-                               uint8_t *prev_volume) {
-  if (volume == *prev_volume) {
-    return;
-  }
-
-  // nasty linear equation
-  uint8_t volume_pos = ((uint16_t)volume * 152 - 13000) / 50;
-  uint8_t prev_volume_pos = ((uint16_t)*prev_volume * 152 - 13000) / 50;
-  CLRPORT(display);
-  if (volume > *prev_volume) {
-    draw_rect(RED, prev_volume_pos, 244, volume_pos, 256);
-  } else {
-    draw_rect(WHITE, volume_pos, 244, prev_volume_pos, 256);
-  }
-  SETPORT(display);
-
-  *prev_volume = volume;
-}
-
 void ST7789_UpdateVolumeBar(ST7789_t *display, uint8_t volume,
                             uint8_t *prev_volume) {
-  if (volume > 100 && *prev_volume > 100) {
-    update_volume_loud(display, volume, prev_volume);
-    return;
-  }
-
-  if (volume <= 100 && *prev_volume <= 100) {
-    update_volume_regular(display, volume, prev_volume);
-    return;
-  }
-
-  if (volume > *prev_volume) {
-    // volume is > 100 while prev_volume <= 100
-    update_volume_regular(display, 100, prev_volume);
-    update_volume_loud(display, volume, prev_volume);
-  } else {
-    update_volume_loud(display, 100, prev_volume);
-    update_volume_regular(display, volume, prev_volume);
-  }
+  update_volume_regular(display, volume, prev_volume);
+  return;
 }

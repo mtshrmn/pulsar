@@ -164,6 +164,7 @@ static char *get_image_path_from_sink_info(const pa_sink_input_info *info) {
 
 void sinkctl_init_displays(void) {
   LOGI("clearing displays");
+  hid_reset_queue();
   for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
     displays[i].index = INVALID_SINK_INDEX;
     HIDReport report = {

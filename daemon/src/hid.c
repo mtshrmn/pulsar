@@ -34,6 +34,7 @@ out:
 }
 
 int hid_write(uint8_t *report, size_t size) {
+  report[3] = report[0] ^ report[1] ^ report[2];
   struct libusb_transfer *transfer;
   int ret;
 
@@ -62,6 +63,12 @@ static RGB565 rgb888_to_rgb565(RGB888 *color) {
       .high = (color->g & 0xE0) | color->b >> 3,
   };
   return rgb565;
+}
+
+void hid_reset_queue(void) {
+  report_queue.write_head = 0;
+  report_queue.read_head = 0;
+  report_queue.is_ready_to_dequeue = true;
 }
 
 int hid_enqueue_report(uint8_t *report, size_t size) {
