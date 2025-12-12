@@ -2,8 +2,8 @@
 #include "common/protocol.h"
 #include "log.h"
 #include <libusb-1.0/libusb.h>
+#include <string.h>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #define HIGH(x) ((uint8_t)((x) >> 8))
