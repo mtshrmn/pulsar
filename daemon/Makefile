@@ -9,7 +9,7 @@ OBJ = $(SRC:src/%.c=$(BUILDDIR)/%.o)
 CFLAGS = -Wall -Wextra -pedantic
 CFLAGS += -DLOGLEVEL_INFO -D_REENTRANT
 CFLAGS_STRICT = -Wshadow          \
-  -Wconversion -Wsign-conversion  \
+  -Wincompatible-pointer-types    \
   -Wcast-align=strict             \
   -Wstrict-prototypes             \
   -Wmissing-prototypes            \

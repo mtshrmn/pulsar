@@ -55,4 +55,14 @@ typedef struct __attribute__((packed)) {
 
 _Static_assert(sizeof(HIDReport) <= HID_EPSIZE, "HIDReport too big");
 
+#define HID_REPORT_PARITY_GEN(report)                                          \
+  ({                                                                           \
+    HIDReport *__r = report;                                                   \
+    uint8_t index = __r->index;                                                \
+    uint8_t type = __r->report_type;                                           \
+    uint8_t volume = __r->volume;                                              \
+    uint8_t parity = index ^ type ^ volume;                                    \
+    parity;                                                                    \
+  })
+
 #endif // !PROTOCOL_H

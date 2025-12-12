@@ -172,7 +172,7 @@ void sinkctl_init_displays(void) {
         .report_type = REPORT_TYPE_CLEAR,
     };
 
-    hid_enqueue_report_and_wait((uint8_t *)&report, sizeof(report));
+    hid_enqueue_report_and_wait(&report);
   }
 }
 
@@ -201,7 +201,7 @@ int sinkctl_insert_sink(const pa_sink_input_info *info) {
         .index = i,
         .report_type = REPORT_TYPE_INIT,
     };
-    ret = hid_enqueue_report((uint8_t *)&report, sizeof(report));
+    ret = hid_enqueue_report(&report);
     if (ret != 0) {
       LOGE("error sending INIT report");
       return ret;
@@ -213,7 +213,7 @@ int sinkctl_insert_sink(const pa_sink_input_info *info) {
         .volume = sink_info.volume_percent,
     };
 
-    return hid_enqueue_report((uint8_t *)&report, sizeof(report));
+    return hid_enqueue_report(&report);
   }
 
   // if code reaches here, it means that all displays have a sink already
@@ -236,7 +236,7 @@ int sinkctl_update_sink(const pa_sink_input_info *info) {
         .volume = sink_info.volume_percent,
     };
 
-    return hid_enqueue_report((uint8_t *)&report, sizeof(report));
+    return hid_enqueue_report(&report);
   }
 
   // must update the corresponding sink in queue
@@ -263,7 +263,7 @@ int sinkctl_remove_sink(int index) {
         .report_type = REPORT_TYPE_CLEAR,
     };
 
-    int ret = hid_enqueue_report_and_wait((uint8_t *)&report, sizeof(report));
+    int ret = hid_enqueue_report_and_wait(&report);
     if (ret != 0) {
       LOGE("error enqueuing report");
       return ret;

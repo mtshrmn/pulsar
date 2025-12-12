@@ -20,14 +20,14 @@ typedef struct {
 } RGB565;
 
 typedef struct {
-  uint8_t ring_buffer[RING_BUFFER_SIZE][HID_EPSIZE];
+  HIDReport ring_buffer[RING_BUFFER_SIZE];
   size_t read_head;
   size_t write_head;
   bool is_ready_to_dequeue;
 } HIDQueue;
 
-int hid_enqueue_report(uint8_t *report, size_t size);
-int hid_enqueue_report_and_wait(uint8_t *report, size_t size);
+int hid_enqueue_report(HIDReport *report);
+int hid_enqueue_report_and_wait(HIDReport *report);
 int hid_dequeue_report(void);
 void hid_report_queue_mark_ready(void);
 void hid_reset_queue(void);

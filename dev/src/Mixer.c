@@ -88,8 +88,7 @@ void Bulk_ProcessData(uint8_t *buf, size_t size) {
 
 void HID_ProcessReport(uint8_t *report, size_t size) {
   hid_report = *(HIDReport *)report;
-  uint8_t expected_parity =
-      hid_report.index ^ hid_report.report_type ^ hid_report.volume;
+  uint8_t expected_parity = HID_REPORT_PARITY_GEN(&hid_report);
 
   if (hid_report.parity != expected_parity) {
     HID_ReportACK();

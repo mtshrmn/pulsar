@@ -33,8 +33,11 @@ out:
   libusb_free_transfer(transfer);
 }
 
-int hid_write(uint8_t *report, size_t size) {
-  report[3] = report[0] ^ report[1] ^ report[2];
+static int hid_write(HIDReport *report) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+  report->parity = HID_REPORT_PARITY_GEN(report);
+#pragma GCC diagnostic pop
   struct libusb_transfer *transfer;
   int ret;
 
@@ -45,8 +48,8 @@ int hid_write(uint8_t *report, size_t size) {
   }
 
   libusb_fill_interrupt_transfer(transfer, device_handle, HID_OUT_EPADDR,
-                                 report, size, interrupt_transfer_complete_cb,
-                                 NULL, 1000);
+                                 (uint8_t *)report, sizeof(*report),
+                                 interrupt_transfer_complete_cb, NULL, 1000);
   ret = libusb_submit_transfer(transfer);
   if (ret < 0) {
     LOGE("error submitting libusb transfer %s", libusb_error_name(ret));
@@ -71,21 +74,21 @@ void hid_reset_queue(void) {
   report_queue.is_ready_to_dequeue = true;
 }
 
-int hid_enqueue_report(uint8_t *report, size_t size) {
-  if (size > HID_EPSIZE) {
-    LOGE("report size (%zu) too big", size);
+int hid_enqueue_report(HIDReport *report) {
+  if (report == NULL) {
+    LOGE("recieved null report");
     return 1;
   }
-
-  memcpy(report_queue.ring_buffer[report_queue.write_head], report, size);
+  memcpy((HIDReport *)&report_queue.ring_buffer[report_queue.write_head],
+         report, sizeof(*report));
   report_queue.write_head = (report_queue.write_head + 1) % RING_BUFFER_SIZE;
 
   // attempt dequeuing this report
   return hid_dequeue_report();
 }
 
-int hid_enqueue_report_and_wait(uint8_t *report, size_t size) {
-  int ret = hid_enqueue_report(report, size);
+int hid_enqueue_report_and_wait(HIDReport *report) {
+  int ret = hid_enqueue_report(report);
   if (ret != 0) {
     return ret;
   }
@@ -108,10 +111,10 @@ int hid_dequeue_report(void) {
     return 0;
   }
 
-  uint8_t *report = report_queue.ring_buffer[report_queue.read_head];
+  HIDReport report = report_queue.ring_buffer[report_queue.read_head];
   report_queue.read_head = (report_queue.read_head + 1) % RING_BUFFER_SIZE;
   report_queue.is_ready_to_dequeue = false;
-  return hid_write(report, HID_EPSIZE);
+  return hid_write(&report);
 }
 
 void hid_report_queue_mark_ready(void) {
@@ -136,6 +139,10 @@ int bulk_send_image(uint8_t index, const char *image_path, uint16_t x,
   }
   LOGI("loaded image %s (w*h=%d*%d, c=%d)", image_path, width, height,
        channels);
+  if (width > UINT16_MAX - x || height > UINT8_MAX - y) {
+    LOGE("image too big, arithmetic wrapping will occur");
+    return 1;
+  }
 
   ImageData header = {
       .index = index,
@@ -175,7 +182,7 @@ int bulk_send_image(uint8_t index, const char *image_path, uint16_t x,
 
   LOGI("sending image data over bulk");
   ret = libusb_bulk_transfer(device_handle, BULK_OUT_EPADDR, rgb565_data,
-                             header.data_len, &len, 1000);
+                             (int)header.data_len, &len, 1000);
   if (ret != 0) {
     LOGE("bulk transfer failed - %s", libusb_error_name(ret));
     goto out;
