@@ -1,4 +1,4 @@
-#include "Descriptors.h"
+#include "descriptors.h"
 
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM HIDReportDescriptor[] = {
     0x06, 0x00, 0xFF, // Usage Page (Vendor Defined)

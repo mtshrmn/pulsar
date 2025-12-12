@@ -1,5 +1,5 @@
-#include "HID.h"
-#include "Descriptors.h"
+#include "hid.h"
+#include "descriptors.h"
 
 extern void Bulk_ProcessData(uint8_t *buf, size_t size);
 extern void HID_ProcessReport(uint8_t *buf, size_t size);

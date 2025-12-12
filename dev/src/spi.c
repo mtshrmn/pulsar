@@ -1,4 +1,4 @@
-#include "SPI.h"
+#include "spi.h"
 #include <avr/io.h>
 
 void SPI_Init(void) {

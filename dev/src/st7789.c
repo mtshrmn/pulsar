@@ -1,5 +1,5 @@
-#include "ST7789.h"
-#include "SPI.h"
+#include "st7789.h"
+#include "spi.h"
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 

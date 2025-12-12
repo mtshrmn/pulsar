@@ -5,9 +5,9 @@
 
 #include <LUFA/Drivers/USB/USB.h>
 
-#include "Descriptors.h"
-#include "HID.h"
-#include "ST7789.h"
+#include "descriptors.h"
+#include "hid.h"
+#include "st7789.h"
 
 #define SET_ISR(id)                                                            \
   ISR(INT##id##_vect) { handle_interrupt(id); }
