@@ -104,14 +104,20 @@ int main(void) {
   LOGI("hotplug succeful, listening to libusb events");
 
   while (true) {
-    ret = libusb_handle_events_completed(NULL, NULL);
+    struct timeval tv = {.tv_sec = 5, .tv_usec = 0};
+    ret = libusb_handle_events_timeout_completed(NULL, &tv, NULL);
     if (ret != 0) {
       LOGE("error handling events - %s", libusb_error_name(ret));
       continue;
     }
 
+    // since suspending and resuming the system wont trigger the hotplug
+    // attempt to manualy open the device
     if (device_handle == NULL) {
-      continue;
+      ret = open_libusb_device();
+      if (ret != LIBUSB_SUCCESS) {
+        continue;
+      }
     }
 
     daemon_run();
