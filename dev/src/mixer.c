@@ -124,6 +124,9 @@ int __attribute__((noreturn)) main(void) {
   encoder_init();
   ST7789_Init(displays);
   ST7789_ClearScreens(displays, BLACK);
+  // set builtin led pin to output
+  // used to indicate incomplete quadrature of rotary encoders
+  DDRC |= _BV(PC7);
   // for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
   //   ST7789_ClearScreen(&displays[i], WHITE);
   // }
@@ -135,5 +138,13 @@ int __attribute__((noreturn)) main(void) {
       HID_Task();
     }
     Bulk_Task();
+    // hack: if rotary encoder is in incomplete quadrature position (DT is high)
+    // indicate via builtin led.
+    // this is because all of the DT pins are shared (bad design choice).
+    if (PIND & _BV(PD7)) {
+      PORTC &= ~_BV(PC7);
+    } else {
+      PORTC |= _BV(PC7);
+    }
   }
 }
