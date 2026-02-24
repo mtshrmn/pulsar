@@ -36,7 +36,7 @@ static inline void init_sequence(ST7789_t displays[NUM_DISPLAYS]) {
   FOR_DISPLAY(i) { CLRPORT(&displays[i]); }
 
   CLRPORT(&DC);
-  SPI_Transfer(SWRESET);
+  SPI_Transfer(SLPIN);
   _delay_ms(150);
 
   SPI_Transfer(SLPOUT);

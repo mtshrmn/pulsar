@@ -17,8 +17,9 @@
 // SPI commands
 // https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/docs/datasheet/unit/lcd/ST7789V2_SPEC_V1.0.pdf
 #define MADCTL 0x36
-#define SWRESET 0x10
+#define SWRESET 0x01
 #define SLPOUT 0x11
+#define SLPIN 0x10
 #define COLMOD 0x3A
 #define INVON 0x21
 #define DISPON 0x29
