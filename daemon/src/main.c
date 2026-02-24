@@ -29,11 +29,11 @@ static int open_libusb_device(void) {
     }
 
     ret = libusb_open(devices[i], &device_handle);
-    if (ret != LIBUSB_SUCCESS) {
-      LOGE("error opening device - %s", libusb_error_name(ret));
+    if (ret == LIBUSB_SUCCESS) {
+      LOGI("opened device!");
       goto out;
     }
-    LOGI("opened device!");
+    LOGE("error opening device - %s", libusb_error_name(ret));
   }
 
 out:
