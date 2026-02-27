@@ -40,6 +40,8 @@ typedef struct {
 } ST7789_t;
 
 void ST7789_Init(ST7789_t displays[NUM_DISPLAYS]);
+void ST7789_SuspendDisplay(ST7789_t displays[NUM_DISPLAYS]);
+void ST7789_ResumeDisplay(ST7789_t displays[NUM_DISPLAYS]);
 void ST7789_ClearScreens(ST7789_t displays[NUM_DISPLAYS], uint16_t color);
 void ST7789_ClearScreen(ST7789_t *display, uint16_t color);
 void ST7789_FilledCircle(ST7789_t *display, uint16_t x, uint16_t y,

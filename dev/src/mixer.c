@@ -24,6 +24,7 @@ uint32_t len = 0;
 ImageData image_data;
 HIDReport hid_report;
 uint8_t prev_volumes[NUM_DISPLAYS] = {0};
+bool init = false;
 
 static inline void encoder_init(void) {
   // set PD0, PD1, PD2, PD3, PD7 to input.
@@ -61,6 +62,18 @@ SET_ISR(0)
 SET_ISR(1)
 SET_ISR(2)
 SET_ISR(3)
+
+void EVENT_USB_Device_Suspend(void) {
+  if (init) {
+    ST7789_SuspendDisplay(displays);
+  }
+}
+
+void EVENT_USB_Device_WakeUp(void) {
+  if (init) {
+    ST7789_ResumeDisplay(displays);
+  }
+}
 
 void Bulk_ProcessData(uint8_t *buf, size_t size) {
   if (is_transmitting_image == false) {
@@ -130,6 +143,7 @@ int __attribute__((noreturn)) main(void) {
   // for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
   //   ST7789_ClearScreen(&displays[i], WHITE);
   // }
+  init = true;
 
   for (;;) {
     USB_USBTask();
@@ -138,9 +152,9 @@ int __attribute__((noreturn)) main(void) {
       HID_Task();
     }
     Bulk_Task();
-    // hack: if rotary encoder is in incomplete quadrature position (DT is high)
-    // indicate via builtin led.
-    // this is because all of the DT pins are shared (bad design choice).
+    // hack: if rotary encoder is in incomplete quadrature position (DT is
+    // high) indicate via builtin led. this is because all of the DT pins are
+    // shared (bad design choice).
     if (PIND & _BV(PD7)) {
       PORTC &= ~_BV(PC7);
     } else {

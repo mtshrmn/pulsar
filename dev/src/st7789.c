@@ -213,3 +213,17 @@ void ST7789_UpdateVolumeBar(ST7789_t *display, uint8_t volume,
   update_volume_regular(display, volume, prev_volume);
   return;
 }
+
+void ST7789_SuspendDisplay(ST7789_t *displays) {
+  FOR_DISPLAY(i) { CLRPORT(&displays[i]); }
+  CLRPORT(&DC);
+  SPI_Transfer(SLPIN);
+  FOR_DISPLAY(i) { SETPORT(&displays[i]); }
+}
+
+void ST7789_ResumeDisplay(ST7789_t *displays) {
+  FOR_DISPLAY(i) { CLRPORT(&displays[i]); }
+  CLRPORT(&DC);
+  SPI_Transfer(SLPOUT);
+  FOR_DISPLAY(i) { SETPORT(&displays[i]); }
+}
