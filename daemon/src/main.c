@@ -107,13 +107,10 @@ int main(void) {
   while (true) {
     if (tried_opening_device) {
       ret = libusb_handle_events_completed(NULL, NULL);
-    } else {
-      struct timeval tv = {.tv_sec = 5, .tv_usec = 0};
-      ret = libusb_handle_events_timeout_completed(NULL, &tv, NULL);
-    }
-    if (ret != 0) {
-      LOGE("error handling events - %s", libusb_error_name(ret));
-      continue;
+      if (ret != 0) {
+        LOGE("error handling events - %s", libusb_error_name(ret));
+        continue;
+      }
     }
 
     // since suspending and resuming the system wont trigger the hotplug
