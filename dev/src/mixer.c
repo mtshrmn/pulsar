@@ -80,7 +80,6 @@ void Bulk_ProcessData(uint8_t *buf, size_t size) {
     is_transmitting_image = true;
     len = 0;
     image_data = *(ImageData *)buf;
-    // for now, assert image_data.index == 0
     // clang-format off
     ST7789_StartWriteRaw(&displays[image_data.index], image_data.x0, image_data.y0,
                          image_data.x1, image_data.y1);
@@ -110,7 +109,6 @@ void HID_ProcessReport(uint8_t *report, size_t size) {
 
   ST7789_t *display = &displays[hid_report.index];
   uint8_t *prev_volume = &prev_volumes[hid_report.index];
-  // assert hid_report.index == 0
   switch (hid_report.report_type) {
   case REPORT_TYPE_SET_VOLUME:
     ST7789_UpdateVolumeBar(display, hid_report.volume, prev_volume);
@@ -129,7 +127,7 @@ void HID_ProcessReport(uint8_t *report, size_t size) {
   HID_ReportACK();
 }
 
-int __attribute__((noreturn)) main(void) {
+void setup_device(void) {
   wdt_disable();
   clock_prescale_set(clock_div_1);
   USB_Init();
@@ -140,10 +138,11 @@ int __attribute__((noreturn)) main(void) {
   // set builtin led pin to output
   // used to indicate incomplete quadrature of rotary encoders
   DDRC |= _BV(PC7);
-  // for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
-  //   ST7789_ClearScreen(&displays[i], WHITE);
-  // }
   init = true;
+}
+
+int __attribute__((noreturn)) main(void) {
+  setup_device();
 
   for (;;) {
     USB_USBTask();
