@@ -176,7 +176,7 @@ void sinkctl_init_displays(void) {
   }
 }
 
-int sinkctl_insert_sink(const pa_sink_input_info *info) {
+static int sinkctl_insert_sink_with_name_info(const pa_sink_input_info *info) {
   SinkInfo sink_info = get_sink_info(info);
   LOGI("volume: %d", sink_info.volume_percent);
   for (size_t i = 0; i < NUM_DISPLAYS; ++i) {
@@ -219,6 +219,47 @@ int sinkctl_insert_sink(const pa_sink_input_info *info) {
   // if code reaches here, it means that all displays have a sink already
   // insert sink into sink queue instead
   return sinkctl_insert_sink_in_queue(sink_info);
+}
+
+static void sinkctl_insert_sink_with_name_cb(UNUSED pa_context *c,
+                                             const pa_client_info *client,
+                                             int eol, void *userdata) {
+  if (eol || client == NULL) {
+    free(userdata);
+    return;
+  }
+
+  pa_sink_input_info *info = userdata;
+  pa_proplist_sets(info->proplist, PA_PROP_APPLICATION_NAME, client->name);
+  sinkctl_insert_sink_with_name_info(info);
+}
+
+static void sinkctl_insert_sink_with_client(const pa_sink_input_info *info) {
+  pa_context *c = pulseaudio_get_pa_context();
+  pa_sink_input_info *info_copy = malloc(sizeof(pa_sink_input_info));
+  if (info_copy == NULL) {
+    return;
+  }
+
+  memcpy(info_copy, info, sizeof(*info));
+  info_copy->proplist = pa_proplist_copy(info->proplist);
+  pa_operation *op = pa_context_get_client_info(
+      c, info->client, sinkctl_insert_sink_with_name_cb, info_copy);
+  if (op) {
+    pa_operation_unref(op);
+  }
+}
+
+int sinkctl_insert_sink(const pa_sink_input_info *info) {
+  // since pipewire-pulse stores the application name
+  // in another place than PA_PROP_APPLICATION_NAME,
+  // this possibility needs to be checked before we panic.
+  if (!pa_proplist_gets(info->proplist, PA_PROP_APPLICATION_NAME)) {
+    sinkctl_insert_sink_with_client(info);
+    return 0;
+  }
+
+  return sinkctl_insert_sink_with_name_info(info);
 }
 
 int sinkctl_update_sink(const pa_sink_input_info *info) {
